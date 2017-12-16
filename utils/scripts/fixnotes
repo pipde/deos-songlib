@@ -1,0 +1,47 @@
+base='NOBASENAME'
+echo $base
+for i in $*
+    do
+    note=`rraidentify -n $i`
+    echo the note in question is named $i
+    rraidentify $i
+    echo rraidentify believes the note is $note
+    echo
+    echo what do you wish to do with this note?
+    echo "    " enter \'p\' to repitch the note
+    echo "    " enter \'n\' to rename the note
+    echo "    " enter \'b\' to both rename and repitch the note
+    echo "    " enter \'x\' to leave the note alone
+    echo -n "? "
+    read answer
+    echo 
+    if [ $answer == 'b' -o $answer == 'n' ] ; then
+        if [ $base == 'NOBASENAME' ] ; then
+            echo -n please enter the base name of the renamed note: " "
+            read base
+        fi
+    fi
+    if [ $answer == 'b' ] ; then
+        rraidentify -p $i
+        `rraidentify -p $i`
+        echo mv $i.repitch $base$note.rra
+        mv $i.repitch $base$note.rra
+        mkdir -p fixnotes.save
+        mv $i fixnotes.save/
+    elif [ $answer == 'p' ] ; then
+        rraidentify -p $i
+        `rraidentify -p $i`
+        echo mv $i.repitch $i
+        mv $i.repitch $i
+        mkdir -p fixnotes.save
+        mv $i fixnotes.save/
+    elif [ $answer == 'n' ] ; then
+        echo mv $i $base$note.rra
+        mkdir -p fixnotes.save
+        cp $i fixnotes.save/
+        mv $i $base$note.rra
+    else
+        echo leaving this note alone
+    fi
+    echo
+done

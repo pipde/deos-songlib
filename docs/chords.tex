@@ -1,0 +1,102 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{Songlib: chords}
+
+\title{Songlib: chords\\
+\date{Revision Date: \today}}
+
+\author{written by: Song Li Buser}
+
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{chords.pdf}}
+\W\htmlrule
+
+\section*{Generating Chords}
+
+In addition to the fundamental \see{chord} function,
+\songlib\ provides some specialized chord generating
+functions. The most powerful and easiest to use 
+are the {\it modal} chords. Modal chords are explained in
+the \seed{keySignatures}{key signatures}
+and \see{modes} documents.
+
+Although the use of modal chords is strongly encouraged, \songlib\
+provides for a number of chord functions outside of the modal
+system, described below.
+
+\section*{Integer notation of pitches}
+
+The classical naming of chords is based upon both
+subjective and objective measures and is inherently
+ambiguous. An alternate method of name chords is 
+strictly objective and unambiguous. For example,
+a {\it major} chord (regardless of key) is identified
+by the {\it integer notation}:
+
+\begin{verbatim}
+    {4,7}
+\end{verbatim}
+
+meaning 
+the second note in the chord is four semitones up from the 
+base (or root) note, and the third note is seven
+semitones up from the root.
+
+The equivalent songlib chord using this notation
+is:
+
+\begin{verbatim}
+    void i47(double beats,int instrument,int octave,int pitch)
+\end{verbatim}
+
+The root note of the chord is specified by the octave/pitch pair,
+while the name specifies the second and third notes are four
+and seven semitones above the root.
+The call:
+
+\begin{verbatim}
+    i47(beats,instrument,octave,pitch);
+\end{verbatim}
+
+is therefore exactly equivalent to:
+
+\begin{verbatim}
+    chord(beats,instrument,octave,pitch,4,7,(int) 0);
+\end{verbatim}
+
+The advantage of using the {\it i}-chord functions is 
+that they are only defined for nice-sounding chords,
+that is chords that are commonly used in composition.
+The other advantage is that it saves you a bit of typing.
+
+The defined {\it i}-chords are:
+
+\begin{center}
+    {\it i3}, {\it i4}, {\it i5}, {\it i6}, {\it i7}, {\it i8}, and {\it i9}
+\end{center}
+\begin{center}
+    {\it i37}, {\it i38}, {\it i47}, {\it i49}, {\it i57}, and {\it i59}
+\end{center}
+
+Each of these chords has a version suffixed by the
+letter 'p', which indicates an additional note, one
+octave above the root. Thus,
+
+\begin{verbatim}
+    i47p(beats,instrument,octave,pitch);
+\end{verbatim}
+
+...is equivalent to:
+
+\begin{verbatim}
+    chord(beats,instrument,octave,pitch,4,7,12,(int) 0);
+\end{verbatim}
+
+Keep in mind that music composed solely of nice sounding chords is often boring.
+
+\end{document}

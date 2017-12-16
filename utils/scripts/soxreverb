@@ -1,0 +1,4 @@
+#!/bin/bash
+effect=gain
+options="3 reverb 1.0 0.5 100 80 50"
+soxfilter -e $effect -o "$options" $*

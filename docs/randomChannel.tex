@@ -1,0 +1,36 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{songlib: random channels}
+
+\title{Songlib: random channels\\
+\date{Revision Date: \today}}
+
+\author{Colin B}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{randomchannel.pdf}}
+\W\htmlrule
+
+Songlib has been expanded to support the random selection of notes from multiple
+channel samples in order to create a more realistic sound. This feature is disabled
+by default. See documentation on rcombine/runcombine for information on how to 
+create multiple channeled samples for use with this feature.
+
+Commands connected to random channel selection:
+
+setRandomChannel(int mode)
+use this method and the magic number '1' to enable this, and '0' to disable it!
+
+getRandomChannel()
+this method returns the current magic number status indicating if random channel
+selection is currently enabled or disabled
+
+setRCSeed(int seed)
+this method seeds the random channel selection, useful if you want to get the same
+'randomized' results more than once!
+
+\end{document}

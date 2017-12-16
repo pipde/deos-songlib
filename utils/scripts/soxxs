@@ -1,0 +1,4 @@
+#!/bin/bash
+effect=bandreject
+options="9000 0.71q"
+soxfilter -e $effect -o "$options" $*

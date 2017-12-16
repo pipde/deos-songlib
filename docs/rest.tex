@@ -1,0 +1,41 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{songlib: rest}
+
+\title{Songlib: play\\
+\date{Revision Date: \today}}
+
+\author{John C. Lusth}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{rest.pdf}}
+\W\htmlrule
+
+You can generate a period of silence with the {\it rest} function,
+which
+takes a beat count as an argument.
+For example:
+
+\begin{verbatim}
+    rest(W);
+\end{verbatim}
+
+would generate four beats of silence under 4:4 time.
+One can also rest for some number of measures, by using
+the measuresToBeats conversion function. For example:
+
+\begin{verbatim}
+    rest(measuresToBeats(3));
+\end{verbatim}
+
+would rest for three measures or, under 4:4 time, twelve beats.
+
+\htmlrule
+    
+See also:
+\see{keepingTime}
+\end{document}

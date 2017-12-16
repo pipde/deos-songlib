@@ -1,0 +1,20 @@
+\usepackage{hyperlatex}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{color}
+\usepackage{booktabs}
+\usepackage[compact]{titlesec}
+\usepackage{multirow}
+\usepackage{upquote}
+\T\usepackage{see}
+\W\input{see.sty}
+
+\newcommand\songlib {{\it\bf songlib}}
+\newcommand\Songlib {{\it\bf Songlib}}
+\W\newcommand\sc\textsc
+
+\htmldepth{1}
+\htmladdress{\xlink{lusth@cs.ua.edu}{mailto:lusth@cs.ua.edu}}
+\htmlcss{lusth.css}
+
+\T\setlength\parskip{6 pt}
+\T\setlength\parindent{0 in}

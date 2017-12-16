@@ -1,0 +1,117 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{songlib: reading notes}
+
+\title{Songlib: reading notes\\
+\date{Revision Date: \today}}
+
+\author{Song Li Buser}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{readingSamples.pdf}}
+\W\htmlrule
+
+
+\section{Reading a set of notes}
+
+In {\bf\it songlib}, one can read in a single note or
+a set of notes with a single function call.
+To
+read in a set of notes, a call to {\it readScale} is
+made. The prototype of {\it readScale} is:
+
+\begin{verbatim}
+    int readScale(char *directory,char *prefix);
+\end{verbatim}
+
+This reads in all the notes in the given directory with the given
+prefix. The notes are read as RRA objects and then stored in
+an array. The C note of ocatve 0 is stored at array slot 0,
+The B note of octave 2 is stored at array slot 25, and so on.
+For example, the following code reads in all the notes (as RRA
+files) in the "/home/songlib/samples/guitar/" directory that begin with
+the prefix "pick\_".
+
+\begin{verbatim}
+    #define DIR "/usr/local/share/samples/guitar/"
+    #define PREFIX "pick_"
+
+    int guitar = readScale(DIR,PICK);
+
+    play(4.0,guitar,C,3);
+\end{verbatim}
+
+The function returns the instrument number assigned to notes that were
+specified. The first call to {\it readScale} returns 0, the second returns 1,
+and so on. The {\it readScale} command first looks for notes of the form:
+
+\begin{verbatim}
+    pick_c0.rra
+    pick_c#0.rra
+    pick_d0.rra
+    ...
+\end{verbatim}
+
+If no notes are found, it then looks for notes of the form:
+
+\begin{verbatim}
+    pick_0.rra
+    pick_1.rra
+    pick_2.rra
+    ...
+\end{verbatim}
+
+Notes of this form are assumed to correspond to midi note numbers.
+If the note number is $x$, then it is placed at octave $x / 12$ and note
+$x \% 12$.
+
+Note that at least one note need be present in the directory.
+If a request is made to play notes other than those found,
+songlib will resample the closest found note to make the
+desired note. However, the further away the found note,
+the more artificial the resampling will sound. A good
+rule of thumb is not to resample more than three or four
+semitones away. Also, resampling a note to a higher pitch
+will shorten the length of the resulting note.
+
+\section{Reading a single note}
+
+One can also read in a single note and then use the
+note playing functions that take an RRA object as
+an argument. To read in an RRA note, use the
+{\it readRRA} function:
+
+\begin{verbatim}
+    RRA *readRRA(FILE *in,void (*handler)(RRA *,char *,void *))
+\end{verbatim}
+
+The first argument is a file pointer to the file containing the
+desired note. The second note is a handler for non-standard tags.
+For most songlib work, you do not need to supply a handler, so
+a null value (zero) is passed as the second argument. Here
+is an example:
+
+\begin{verbatim}
+    char *name = "stick.rra";
+    RRA *note;
+    FILE *fp;
+
+    fp = readRRA(name,"r");
+    if (fp == 0) Fatal("could not read file %s\n",name);
+    note = readRRA(fp,0);
+    fclose(fp);
+
+    rplay(4.0,note);
+\end{verbatim}
+
+Notes read and played in this manner are not automatically
+filtered. They can be manually filtered by calling the
+\seed{builtInFilters}{built-in filters} appropriately.
+
+For other note playing functions, see \see{notePlaying}.
+
+\end{document}

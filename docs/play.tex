@@ -1,0 +1,122 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{songlib: play}
+
+\title{Songlib: play\\
+\date{Revision Date: \today}}
+
+\author{John C. Lusth}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{play.pdf}}
+\W\htmlrule
+
+The play family of functions is the primary method for playing
+samples with {\it\bf songlib}:
+
+\begin{verbatim}
+    void play(double duration,int instrument,int octave,int pitch);
+    void nplay(double duration,int instrument,int numberedNote);
+    void rplay(double duration,RRA * r);
+    void dplay(double duration,int *data,int length);
+    void splay(double duration,int instrument,int octave,int pitch);
+    void snplay(double duration,int instrument,int numberedNote);
+    void drum(double duration,int instrument,int numberedNote);
+\end{verbatim}
+
+Functions in the
+{\it play} family play a given note for the given duration. The duration
+is specified in \xlink{beats}{keepingTime.html}.
+The note to be played is specified by
+an instument/octave/pitch triplet, an instrument/numbered note pair,
+an \xlink{RRA}{rra.html} object, or an array of amplitude data.
+Note that the play family follows the {n,r,d} convention.
+
+The instrument is an integer returned by the \seed
+{readingSamples}{readScale} function.
+
+The actual length of the duration depends on the tempo given
+in a \seed{keepingTime}{setTime} call.
+
+For example, if the note is to be played for two beats and
+the number of beats per minute is 132 and the sample rate
+is 44,100 samples per second, then...
+
+\begin{verbatim}
+    2 * 1/132 * 60 * 44100
+\end{verbatim}
+
+...or...
+
+\begin{verbatim}
+    3272
+\end{verbatim}
+
+...samples from the beginning of the given note
+will be added into the output buffer starting
+at the current location. Moreover, additional
+samples beyond the 3727th will be added in,
+at ever-diminishing amplitiudes, so that
+the note does not end abrubtly.
+The number of additional
+samples added to the output is governed by
+the current value of \seed{controlFunctions}{sustain}.
+
+The exception to the above behavior are the
+{\it splay}, {\it snplay} and {\it drum} functions.
+These functions play the entire note and then
+rewind the song (using 
+\seed{movements}{getLocation} and 
+\seed{movements}{setLocation})
+so that it appears as if only the requested number of
+beats has elapsed. The {\it splay} and {\it snplay} functions
+are useful for playing instruments whose notes
+always have a fixed duration (such as drums).
+The function drum randomly adds a little variation
+to the amplitude, timing, and pitch of the
+note being played.
+
+The {\it play} function and its alternatives
+update the current location
+in the output.
+
+Here is an example {\it\bf songlib} program that plays a single note:
+
+\htmlrule
+
+\begin{verbatim}
+#include "songlib.h"
+
+int
+main()
+    {
+    int inst;
+
+    initSong();
+    setTime(132,4);
+    setSustain(0.99995);
+
+    openOutput("song.rra",44100,16);
+
+    inst = readScale("../../../samples/guitar","note_");
+
+    play(2.0,inst,3,C);
+
+    closeOutput();
+
+    return 0;
+    }
+\end{verbatim}
+
+\htmlrule
+    
+See also:
+\see{keepingTime},
+\see{controlFunctions},
+\see{readingSamples},
+\see{movements}
+\end{document}

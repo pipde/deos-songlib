@@ -1,0 +1,21 @@
+
+
+getpack_helper(){
+	wget songlib.cs.ua.edu/samples/$1.tgz
+	tar xvzf $1.tgz
+	./install
+}
+
+mkdir new_samples
+cd new_samples
+
+while [ -n "$*" ]; do
+	mkdir $1
+	cd $1
+	getpack_helper $1
+	cd ..
+	shift
+done
+
+cd ..
+

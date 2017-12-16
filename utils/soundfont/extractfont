@@ -1,0 +1,14 @@
+# this script plays instrument notes from a soundfont
+echo arg 1: soundfont
+echo arg 2: midi instrument
+echo arg 3: first note number
+echo arg 4: last note number
+echo arg 5: duration
+javac -cp .:jMusic1.6.4.jar Pitch.java
+for ((i = $3; i < $4; ++i))
+    do
+    echo java -cp .:jMusic1.6.4.jar Pitch $2 $i $5
+    java -cp .:jMusic1.6.4.jar Pitch $2 $i $5
+    echo timidity -x"soundfont $1" pitch_$i.mid -Ow
+    timidity -idv -x"soundfont $1" pitch_$i.mid -Ow
+    done

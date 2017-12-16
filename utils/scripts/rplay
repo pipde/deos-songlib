@@ -1,0 +1,61 @@
+#!/bin/bash
+if [ $WAVPLAYER"missing" == "missing" ]
+then
+    PLAYER=play
+else
+    PLAYER=$WAVPLAYER
+fi
+
+SKIP=0
+AMPLITUDE=1
+#!/bin/bash
+# Argument = -t test -r server -p password -v
+
+usage()
+{
+cat << EOF
+usage: $0 options
+
+This script plays one or more RRA audio files.
+
+OPTIONS:
+   -a Z    set amplitude to Z (< 1 is quieter)
+   -s Y    skip Y seconds
+   -p X    use player X
+   -h      show this message
+EOF
+}
+
+while getopts “a:hs:p:” OPTION
+do
+     case $OPTION in
+         h)
+             usage
+             exit 1
+             ;;
+         a)
+             AMPLITUDE=$OPTARG
+             ;;
+         s)
+             SKIP=$OPTARG
+             ;;
+         p)
+             PLAYER=$OPTARG
+             ;;
+         ?)
+             usage
+             exit
+             ;;
+     esac
+done
+
+shift $((OPTIND-1))
+
+echo playing $1...
+if [ $PLAYER == play ]
+then
+    rra2wav -a $AMPLITUDE -s $SKIP $1 | $PLAYER -t wav -
+else
+    name=`basename $1 .rra`
+    rra2wav -a $AMPLITUDE -s $SKIP $1 $name.wav; $PLAYER $name.wav
+fi

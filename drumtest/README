@@ -1,0 +1,6 @@
+You need to install the drums-hera sample pack:
+
+     mkdir temp
+     cd temp
+     getpack drums-hera
+     rm *.rra

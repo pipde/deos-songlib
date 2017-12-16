@@ -1,0 +1,8 @@
+To extract wav files from sound fonts, you need to:
+
+   sudo apt-get install libstdc++5 timidity
+
+To unpack sfpack files:
+
+    wine SFPACK [soundfont].sfpack
+   

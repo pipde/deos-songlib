@@ -1,0 +1,94 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{Songlib: chord}
+
+\title{Songlib: chord\\
+\date{Revision Date: \today}}
+
+\author{Song Li Buser}
+
+\date{Revision Date: \today}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{chord.pdf}}
+\W\htmlrule
+
+The chord family of functions plays multiple notes at the same time.
+The family follows the {\it n}/{\it r}/{\it d} convention and also has alternatives
+where notes are passed in an array rather than variadically.
+
+\begin{verbatim}
+    void chord(double duration,int instrument,
+        int baseOctave,int basePitch,...,(int) 0);
+
+    void nchord(double duration,int instrument,
+        int baseNumberedNote,...,(int) 0);
+
+    void rchord(double duration,RRA *r,...,(int) 0);
+
+    void dchord(double duration,int *data,int length,...,(int) 0);
+
+    void achord(double duration,int instrument,
+        int baseOctave,int basePitch,int *offsets,int length);
+    
+    void nachord(double duration,int instrument,
+        int baseNumberedNote,int *offsets,int length);
+\end{verbatim}
+
+For {\it chord} and {\it nchord}, the variadic part is a list of
+offsets from the numbered base note and is terminated by a zero. For {\it rchord},
+the variadic part is additional RRA objects to play simultaneously.
+For {\it dchord}, the variadic part is additional data/length pairs.
+
+The {\it achord} function takes a base octave/pitch pair and an array of offsets,
+The {\it nachord} function takes a numbered note as the base and an array 
+of offsets. The offset arrays have length {\it length}.
+
+As an example, the following line plays a three-note chord:
+
+\begin{verbatim}
+    chord(4,guitar,3,C,3,5,7,(int) 0);
+\end{verbatim}
+
+The notes played are C, F (which is C + 5 semitones), and G (which is C + 7
+semitones). The following calls are equivalent:
+
+\begin{verbatim}
+    nChord(4,guitar,C3,5,7,(int) 0);
+    rchord(4,getNumberedNote(C3),getNumberedNote(F3),getNumberedNote(G3),(int) 0);
+\end{verbatim}
+
+The separation between the starts of the notes in the chord is
+controlled by the \seed{stride}{controlFunctions} setting.
+
+\section*{Other simple chord functions}
+
+Certain semitone delta combinations are so common, \songlib\ has shortcut
+functions. In the following pairs of calls, the two calls in the pair
+are equivalent:
+
+\begin{verbatim}
+    chord(H,inst,octave,C,+4,+7,(int) 0);
+    maj(H,inst,octave,C);
+
+    chord(H,inst,octave,D,+3,+7,(int) 0);
+    min(H,inst,octave,D);
+
+    chord(H,inst,octave,E,+3,+6,(int) 0);
+    dim(H,inst,octave,E);
+
+    chord(H,inst,octave,F,+4,+8,(int) 0);
+    aug(H,inst,octave,F);
+\end{verbatim}
+
+See also: \see{play}, \see{bend},
+\see{trill},
+\seed{draw/resolve}{draw},
+\see{silence},
+\see{stride}
+
+\end{document}

@@ -1,0 +1,4 @@
+#!/bin/bash
+effect=ladspa
+options="tap_deesser tap_deesser -30 6200"
+soxfilter -e $effect -o "$options" $*

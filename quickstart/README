@@ -1,0 +1,17 @@
+To build the song, run the command 
+
+    make
+
+If you see this error:
+
+    gcc  -Wall -g -o quickstart.x quickstart.c -lsong -lm 
+    quickstart.c:4:26: fatal error: songlib/util.h: No such file or directory
+    compilation terminated.
+
+that means you haven't installed songlib yet. Type the commands:
+
+    cd ..
+    make install
+
+You will be asked for your password.
+This all assumes you have adminstrative privledges on this machine.

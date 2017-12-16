@@ -1,0 +1,14 @@
+#!/bin/bash
+
+COMP="compand 0.3,1 6:-70,-60,-20 -5 -90 0.2"
+COMP="compand 0.1,0.3 -60,-60,-30,-15,-20,-12,-4,-8,-2,-7 -2"
+COMP="compand 0.3,1 -90,-90,-70,-70,-60,-20,0,0 -10 0 0.2"
+# check number of arguments
+if [ $# == 1 ] ; then
+    rra2wav $1 | sox -t wav - -t wav - $COMP > .wav; wav2rra .wav
+elif [ $# == 2 ] ; then
+    rra2wav $1 | sox -t wav - -t wav - $COMP > .wav; wav2rra .wav >  $2
+else
+    rra2wav | sox -t wav - -t wav - $COMP > .wav; wav2rra .wav
+fi
+rm .wav

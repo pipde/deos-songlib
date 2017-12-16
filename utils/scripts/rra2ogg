@@ -1,0 +1,9 @@
+#!/bin/bash
+for s in "$@"
+    do
+    chmod 644 "$s"
+    name=`basename "$s" .rra`
+    dir=`dirname "$s"`
+    echo converting "$s" to OGG
+    rra2wav "$s" | sox -t wav - "$dir"/"$name".ogg
+    done

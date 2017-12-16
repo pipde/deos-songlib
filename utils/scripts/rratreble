@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# check number of arguments
+if [ $# == 1 ] ; then
+    rra2wav $1 | sox -t wav - -t wav - treble +20 \
+        > .wav; wav2rra .wav
+elif [ $# == 2 ] ; then
+    rra2wav $1 | sox -t wav - -t wav - treble +20 \
+        > .wav; wav2rra .wav >  $2
+else
+    rra2wav | sox -t wav - -t wav - treble +20 > .wav; wav2rra .wav
+fi
+rm -f .wav

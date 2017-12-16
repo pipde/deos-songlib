@@ -1,0 +1,561 @@
+\documentclass{article}  
+
+\usepackage{hyperlatex}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{color}
+\usepackage{booktabs}
+\usepackage[compact]{titlesec}
+\usepackage{multirow}
+\usepackage{upquote}
+\T\usepackage{see}
+\W\input{see.sty}
+
+\newcommand\songlib {{\it\bf songlib}}
+\newcommand\Songlib {{\it\bf Songlib}}
+\W\newcommand\sc\textsc
+
+\htmldepth{1}
+\htmladdress{\xlink{BBonds@cs.ua.edu}{mailto:BBonds@cs.ua.edu}}
+\htmlcss{lusth.css}
+
+\T\setlength\parskip{6 pt}
+\T\setlength\parindent{0 in}
+\htmltitle{Songlib: tabs}
+
+\title{The \Songlib\ Tab Processor\\
+\date{Revision Date: \today}}
+
+\author{written by: Brandon Bonds}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{tab.pdf}}
+\W\htmlrule
+
+The \songlib\ Tab Processor, {\it processtab}, parses a {\it tab} file into
+\songlib-based source code.  You can run {\it processtab} as follows:
+
+\begin{verbatim}
+    processtab [filename].tab
+\end{verbatim}
+
+This produces a C file, [{\it filename}].{\it c}, that builds against \songlib,
+and a {\it makefile}.  (View more options by using the \verb!-h! switch.)
+Running:
+
+\begin{verbatim}
+    make
+\end{verbatim}
+
+will compile [{\it filename}].{\it c} into a binary (simply named
+[filename] with no extension).  The makefile will then run the binary
+to produce [filename].rra.  By default, make will immediately play the
+RRA file.
+
+\section*{Tab Format Overview}
+
+A {\it tab} file is text.  To start, let's define a very simple tablature:
+
+\begin{verbatim}
+    |SN|o-o-|oooo|
+    |  |1234|1234|
+\end{verbatim}
+
+This is a single {\it stave} of tablature containing two measures of snare drum 
+beats.  The first measure has notes at beats 1 and 3 and rests at beats 2 and 4.
+The second measure has notes at all four beats.
+
+However, this file is not quite complete.  {\it processtab} does not natively
+understand what ``SN'' represents.  We must define it using an {\it attribute}.
+The following is a complete tab file which contains a definition for
+``SN'' using the \verb!voice! attribute:
+
+\begin{verbatim}
+    # Voices
+
+    voice:
+    {
+        "name": "SN",
+        "instrumentPath": "/usr/local/share/samples/drums/",
+        "instrumentBaseName": "hera_",
+        "notes":
+        [
+            {
+                "name": "o",
+                "offset": 57
+            }
+        ]
+    }
+
+    # Tab
+
+    |SN|o-o-|oooo|
+    |  |1234|1234|
+\end{verbatim}
+
+For now, it is sufficient to understand that a voice is defined by a name
+(``voice''), followed by a colon (:), followed by JSON-formatted details inside
+curly braces.
+
+In addition to staves and attributes, tab files may also contain comments
+which are not parsed.  A comment begins with the hash character (\#) and lasts
+until the end of the line.
+
+\section*{Tab Defaults}
+
+By default, the following values are used:
+
+\begin{itemize}
+\item[stride] 0.05
+\item[sustain] 0.99995
+\item[primary emphasis] 1 (no emphasis)
+\item[secondary emphasis] 1 (no emphasis)
+\item[tempo] 80
+\item[time signature] 4/4
+\item[use random sampling] true
+\end{itemize}
+
+\section*{More on Staves}
+
+A tab contains one or more {\it staves}.  Staves define the notes to be
+played.  The example above contains a single stave defining notes for voice
+``SN''.
+
+Each stave ends with a single line called the {\it timing course}.  This line
+defines the beat.  In the example, both measures have a basic four-beat timing
+course.  More complex timing courses are possible.  The example could have been
+written as either of the following:
+
+\begin{verbatim}
+    |SN|o---o---|o-o-o-o-|
+    |  |1&2&3&4&|1&2&3&4&|
+    
+    |SN|o-------o-------|o---o---o---o---|
+    |  |1e&a2e&a3e&a4e&a|1e&a2e&a3e&a4e&a|
+\end{verbatim}
+
+The first stave subdivides the timing into eighth notes, and the second stave
+subdivides the timing into sixteenth notes.  Numbers indicate down beats,
+ampersands (\verb!&!) represent upbeats, and ``e'' and ``a'' represent sixteenth
+divisions.  This makes more intricate rhythms possible, such as the following:
+
+\begin{verbatim}
+    |SN|o--oo---|o-o-o-o-oo-oo-o-|
+    |  |1&2&3&4&|1e&a2e&a3e&a4e&a|
+\end{verbatim}
+
+You may mix timings, even in the same measure:
+
+\begin{verbatim}
+    |SN|o--oo-oooo|
+    |  |1&2&3&4e&a|
+\end{verbatim}
+
+You may insert dots (.) in the timing course to subdivide into triplets or
+practically any other possible timing (such as sextuplets, quintuplets, etc.):
+
+\begin{verbatim}
+    |SN|o--o--oooo--|o--o--ooooooo--|
+    |  |1..2..3..4..|1..2..3.....4..|
+\end{verbatim}
+
+Each beat is subdivided into triplets, except beat three of the second measure,
+which is subdivided into sextuplets.
+
+Multiple voice lines (voice courses) may exist for each stave.  Everything
+should line up vertically.  Spaces are optional around the name, and may be
+useful for lining up courses whose names are different lengths.  Notes that are
+played at the same time must line up vertically.  All pipe characters (|) must
+line up vertically.
+
+For instance, the following stave must include an extra space for the ``B''
+voice to make it line up with the ``SN'' voice:
+
+\begin{verbatim}
+    |SN|--o---o-|o-o-o-o-oo-oo-o-|
+    |B |o--oo---|o---o---o---o---|
+    |  |1&2&3&4&|1e&a2e&a3e&a4e&a|
+\end{verbatim}
+
+\subsection*{Notes and Rests}
+
+Inside a measure, a dash character (-) indicates a rest and a space indicates
+that the previous note is held out during that duration.  The following two
+measures have the same rhythm, but differ in how long each note is held out:
+
+\begin{verbatim}
+    |SN|o o o o |o-o-o-o-|
+    |  |1&2&3&4&|1&2&3&4&|
+\end{verbatim}
+
+In the first measure, each note holds out a quarter-note length.  In the second
+measure, each note holds out an eighth-note length, followed by an eighth-note
+rest.
+
+``o'' has been used to indicate playing a note in each of these examples.
+Any character other than space or dash may be used to represent a note, and is
+defined by the voice attribute.  In the next example, we will use ``x'' to
+represent a closed hi-hat, ``o'' to represent and open hi-hat, and ``@'' to
+represent a rim click:
+
+\begin{verbatim}
+    |HH|XxxxXxxo|XxxxXxxo|
+    |SN|--@---@-|--@---@-|
+    |  |1&2&3&4&|1&2&3&4&|
+\end{verbatim}
+
+Capitalized characters typically represent accents.
+
+\section*{More on Attributes}
+
+An attribute is defined on one or more lines.  It lists the name of the
+attribute (such as \verb!voice!), followed by a colon character (:), followed
+by details in JSON (JavaScript Object Notation) format.  JSON is a common
+hierarchical text format like XML, but with less bloat.
+
+There are three built-in attribute types:  \verb!voice!, \verb!tempo!,
+and \verb!amplitude!.  {\it processtab} also supports user-defined
+attribute processors.
+
+\subsection*{Voice}
+
+The voice processor defines each voice, or instrument, that can play
+notes in the tab.  It configures the voice according to the
+following attributes:
+
+\begin{description}
+\item[name] (string):
+    This is the unique name that also appears in the first column
+    of a voice course, before measure and note definitions.  In the above
+    examples, ``SN'' was defined for a snare drum.
+\item[instrumentPath] (string): 
+    This is the directory (folder) on disk which contains the samples.
+    See the first argument for {\it readScale} in \songlib.
+\item[instrumentBaseName] (string):
+    This is the base name for each sample.  See the second argument
+    for {\it readScale} in \songlib.
+\item[amplitudeMultiplier] (float):
+    This sets the base amplitude for all notes in this instrument.
+    See {\it setAmplitude} in \songlib.  Note that the final amplitude
+    for a note may be adjusted by other parameters, and may be adjusted by other
+    processors such as {\it amplitude}.
+\item[instrumentCount] (integer):
+    When set higher than one, \songlib will simulate multiple
+    instrumentalists by playing the note on top of itself several times.
+    This is affected by the values of {\it amplitudeDeviation}, {\it
+    pitchDeviation}, and {\it timingDeviation}.  The amplitude of each
+    individual instrument in this set is divided by instrumentCount.
+\item[amplitudeDeviation] (float):
+    Sets the randomization of the amplitude.  Higher values help
+    simulate instrument players with less skill.  The entire song will be
+    amplitude-adjusted, up or down, at a randomized value between 1 and
+    {\it amplitudeDeviation}.  When {\it instrumentCount} is greater than
+    one, each individual instrument has a separate randomized amplitude
+    throughout the song.
+\item[pitchDeviation] (float):
+    Sets the randomization of the pitch.  Higher values can simulate the
+    natural difference in the pitch of percussion instruments, or help
+    simulate tuned instrument players with less skill.  The entire song
+    will be pitch-adjusted, up or down, at a randomized value between
+    1 and {\it pitchDeviation}.  When {\it instrumentCount} is greater
+    than one, each individual instrument has a separate randomized pitch
+    throughout the song.
+\item[timingDeviation] (float):
+    Sets the randomization of timing.  Higher values can simulate mud
+    or slop.  Each individual note will be offset by up to timingDeviation
+    beats from its intended location.
+\item[notes] (array):
+    Contains several individual note definitions, each with the following
+    attributes:
+    \begin{description} \item[name] (character):
+        A single character used to define notes in the {\it tab}.
+        In the examples above, the ``o'' note is defined.
+    \item[offset] (integer):
+        A value indicating the offset used to play the note.  See the
+        third parameter for {\it nplay} in \songlib.
+    \item[accent] (boolean):
+        If ``true'', this note will always be played at double the
+        amplitude of a normal note.  (Typically, the {\it name} is capitalized
+        for accented notes.)
+    \item[delay] (integer):
+        The number of samples to delay the note.  Typically this value is
+        negative, causing the note to begin early.  This is useful for aligning
+        the attack of a note.
+    \end{description}
+\end{description}
+
+The following is a full example of a voice attribute with two notes defined:
+
+\begin{verbatim}
+	voice:
+	{
+		"name": "SN",
+		"instrumentPath": "/usr/local/share/samples/drums-snare/",
+		"instrumentBaseName": "pearlFF_",
+		"amplitudeMultiplier": 16.0,
+		"instrumentCount": 4,
+		"amplitudeDeviation": 1.5,
+		"pitchDeviation": 4.0,
+		"timingDeviation": 0.125,
+		"notes":
+		[
+		    {"name": "o", "offset": 57, "delay": -1234},
+		    {"name": "O", "offset": 57, "delay": -1234, "accent": true}
+		]
+	}
+\end{verbatim}
+
+This voice defines a ``pearlFF'' snare drum from the ``drums-snare'' sample
+pack.  The overall amplitude is adjusted louder by a factor of 16.  Each note is
+played 4 times simultaneously (due to {\it instrumentCount}).  Each individually
+played note has a randomly adjusted amplitude, pitch, and timings to simulate 4
+real players.
+
+Two notes are defined:  lowercase ``o'' plays sample 57 (note A4) with a delay
+of -1234 samples (which makes it start playing a bit early), and uppercase ``O''
+plays the same note with an accent.
+
+\subsection*{Tempo}
+
+Tempo is a simple processor that defines the tempo beginning at that location
+in the tab.  Tempo may be redefined multiple times throughout a song as
+required.
+
+\begin{verbatim}
+    # Tempo example
+    tempo: { "": 164 }
+\end{verbatim}
+
+This will set the music tempo to 164 beats per minute.  See {\it setTempo} in
+\songlib.
+
+\subsection*{Amplitude}
+
+Amplitude is a simple processor that defines the base amplitude for all voices
+and notes beginning at that location in the tab.  This value multiplies against
+the explicit values defined by voice attributes.  Amplitude may be redefined
+multiple times throughout a song as required.
+
+\begin{verbatim}
+    # Amplitude example
+    amplitude: { "": 0.015 }
+\end{verbatim}
+
+This will set the base amplitude for all instruments to 0.015.  The ``voice''
+attribute will then multiply this value by any other amplitude variations it
+sets.  See {\it setAmplitude} in \songlib.
+
+\subsection*{Custom processors}
+
+Custom processors are an advanced way to alter the output of {\it processtab}.
+Custom processors are written in C and are used like built-in processors.
+
+\subsubsection*{Writing custom processors}
+
+We will create an example custom processor that calls the \songlib function {\it
+setSkipSeconds}.  We will name this processor \verb!skipseconds!.
+
+Each custom processor must define a {\it .c} file and a {\it .h} file.  These
+files must be named the same as the processor name.  These files must define a
+minimum of the following five {\it hooks} (replace {\it XYZ} with your processor
+name):
+
+\begin{itemize}
+\item \verb!void setupProcessor_!{\it XYZ}\verb!(int, int, json_value *)!
+\item \verb!void preProcess_!{\it XYZ}\verb!(int, Part *)!
+\item \verb!void postProcess_!{\it XYZ}\verb!(int, Part *)!
+\item \verb!void preRenderNote_!{\it XYZ}\verb!(int, Part *, int)!
+\item \verb!void renderNote_!{\it XYZ}\verb!(int, Part *, int)!
+\end{itemize}
+
+{\it Hooks} are functions called by other code.  In our case, these hooks are
+called by the output of {\it processtab}.
+
+This is our {\it skipseconds.h} file:
+
+\begin{verbatim}
+	#ifndef INCLUDED_SKIPSECONDS_H
+	#define INCLUDED_SKIPSECONDS_H
+
+	/*
+	 * Defines a skip seconds processor
+	 */
+
+	#include <tab/tabproc.h>
+
+	extern void setupProcessor_skipseconds(int, int, json_value *);
+
+	/* Pre- and post- processing */
+
+	extern void preProcess_skipseconds(int, Part *);
+	extern void postProcess_skipseconds(int, Part *);
+		
+	/* Note rendering */
+		
+	extern void preRenderNote_skipseconds(int, Part *, int);
+	extern void renderNote_skipseconds(int, Part *, int);
+
+	#endif /* INCLUDED_SKIPSECONDS_H */
+\end{verbatim}
+
+All of these functions must be implemented in the {\it .c} file, but any hook
+that is not needed may contain an empty implementation.
+
+In the case of \verb!skipseconds!, we will only implement \verb!setupProcessor!.
+This is our {\it skipseconds.c} file, including the functions that have an empty
+implementation:
+
+\begin{verbatim}
+	/*
+	 * Defines a skip seconds processor
+	 */
+
+	#include "skipseconds.h"
+
+	/* Processor setup */
+
+	void
+	setupProcessor_skipseconds(int parameterIndex, int sectionNumber, json_value *parameter)
+		{
+		if (getSkipSeconds() != 0.0)
+			{
+			Fatal("skipseconds may only be set once\n");
+			return;
+			}
+		double seconds = get_json_double(parameter, "", 0);
+		setSkipSeconds(seconds);
+		}
+
+	/* Pre- and post- processing */
+
+	void
+	preProcess_skipseconds(int parameterIndex, Part *part)
+		{
+		}
+
+	void
+	postProcess_skipseconds(int parameterIndex, Part *part)
+		{
+		}
+	 
+	/* Note rendering */
+		
+	void
+	preRenderNote_skipseconds(int parameterIndex, Part *part, int noteNumber)
+		{
+		}
+		
+	void
+	renderNote_skipseconds(int parameterIndex, Part *part, int noteNumber)
+		{
+		}
+\end{verbatim}
+
+\verb!setupProcessor! will extract the number of seconds, as a \verb!double!,
+from the JSON-formatted attribute (using the {\it get\_json\_double} function).
+It will then pass that value into the \songlib function {\it setSkipSeconds}.
+And we will add a check using \songlib function {\it getSkipSeconds} to ensure
+that the value is only set once.
+
+\subsubsection*{Using custom processors}
+
+Custom processors are used just like any built-in processor, by adding an
+attribute at the appropriate location in your tab file.  The {\it skipseconds}
+processor may be invoked as follows:
+
+\begin{verbatim}
+	skipseconds: { "" : 120 }
+\end{verbatim}
+
+{\it processtab} automatically recognizes when a tab uses custom processors (any
+attribute name other than \verb!voice!, \verb!tempo!, and \verb!amplitude!), and
+outputs a makefile that references the {\it .c} and {\it .h} you create for your
+custom processor.
+
+\subsubsection*{More custom processing details}
+
+This section explains, in detail, the five hooks that are used in custom
+attribute processing.
+
+(It may help to visualize this process as it is being described.  To do so, run
+{\it processtab} on a simple tablature, and read the {\it main()} function in
+the output {\it .c} file.  You can see each of these hooks being called as
+described below.)
+
+\paragraph*{setupProcessor}
+
+\verb!setupProcessor! is called first for each attribute.  This is called before
+{\it songInit}, before defaults are set, and before the {\it .rra} file is open
+for output.  {\it setupProcessor} is the only location that has access to the
+processed JSON information.
+
+Because of this, we may need to store any data for later use by the other four
+functions.  The first integer passed into \verb!setupProcessor! is {\it
+parameterIndex}, which should be associated with that data.  That same integer
+is passed into the other hooks to reference that particular data.
+
+The second parameter is the section number.  This allows attributes to affect
+different areas of the song.  In this context, a {\it section} is equivalent to
+the stave number above which the attribute is defined.  All attributes defined
+before the first stave are in section 0, and after the first stave but before
+the second are in section 1, and so on.
+
+As you can see from the example {\it skipseconds} processor, it is possible to
+ignore these two values for very simple processors.
+
+The third parameter is the data contained within the attribute.  It is
+pre-parsed using the {\it json-parser} library (see
+https://github.com/udp/json-parser, and for more examples see the source code
+to the built-in attribute processors).  The data is passed in as a {\it
+json\_value} data structure.
+
+\paragraph*{Other functions}
+
+The rest of the functions take an integer {\it parameterIndex}, which is used to
+reference data stored by {\it setupProcessor}.  They also take in a {\it Part},
+which roughly represents a voice.
+
+But remember, \verb!voice! is just another processor written the same way that
+a custom processor is written.  It is a complex processor that ultimately calls
+the \songlib {\it rplay} function.  You can write a custom processor and use that
+instead of \verb!voice!, or you can copy and make changes to the \verb!voice!
+processor to suit your needs.
+
+So, a {\it Part} represents the notes that are to be played by a certain
+instrument.  A part is defined by its name such as ``SN'' or ``B''.
+
+Each part is processed at once.  \verb!preProcess! is called before processing
+the notes, and \verb!postProcess! is called after processing all the notes.
+Between, each individual note is processed in order by first calling
+\verb!preRenderNote! for every attribute, and then \verb!renderNote! for every
+attribute.
+
+\verb!preRenderNote! and \verb!renderNote! have a third paramter, {\it
+noteNumber}, which can be used to index into the {\it Part}.
+
+\section*{Parser Limitations}
+
+The {\it processtab} program currently requires 4/4 time signature for all tabs.
+It requires that no spaces come before or after stave courses, or else a parsing
+error will occur.  Also, you may come across some parsing bugs related to
+whitespace between staves or between voices, staves, and comments.
+
+All quarter note timings must be indicated.  This is partially due to the need
+to make the tab language unambiguous.  Otherwise, the following invalid tab
+could be interpreted multiple ways:
+
+\begin{verbatim}
+    # Invalid tab
+
+    |SN|oooooo|
+    |  |1&3&4&|
+\end{verbatim}
+
+Here, is the first \verb!&! the upbeat of beat one or the upbeat of beat two?
+
+If ``e'' and/or ``a'' are indicated, \verb!&! must also be indicated.  However,
+``e'' may be indicated without ``a'', and ``a'' without ``e'', of the same beat.
+
+\end{document}

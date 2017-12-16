@@ -1,0 +1,11 @@
+#!/bin/bash
+for s in "$@"
+    do
+    chmod 644 "$s"
+    name=`basename "$s" .ogg`
+    dir=`dirname "$s"`
+    echo converting "$s" to MP3
+    sox "$s" "$dir"/"$name".wav
+    lame "$dir"/"$name".wav "$dir"/"$name".mp3
+    rm "$dir"/"$name".wav
+    done

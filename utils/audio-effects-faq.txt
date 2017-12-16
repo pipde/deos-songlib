@@ -1,0 +1,1270 @@
+                +++++++++++++++++++++++++++++++++++++++++
+                +                                       +
+                +       A U D I O    E F F E C T S      +
+                +                                       +
+                +       Frequently Asked Questions      +
+                +                                       +
+                +++++++++++++++++++++++++++++++++++++++++       
+                
+Mike Currington                                 curring@ferndown.ate.slb.com
+v1.0 - 4 March 1995
+
+
+
+        About this FAQ
+        --------------
+This document is intended to help anyone who has questions concerning audio
+effects, and was written after seeing the same questions about audio effects
+being asked time and time again on usenet newsgroups.
+By audio effects I mean effects that are applied to audio signals, usually to
+change the sound in some way.  If this sounds (pun intended) even slightly
+interesting then read on...
+
+
+As this is the first version of the FAQ, I need comments, suggestions,
+revisions, and (most importantly) additions for the next version of the faq (of
+course it may stink so bad that there will be no next version :-) ).
+
+Please read the sections at the end of the faq on contributions and how to
+contact me, thanks.
+
+At this point suppose I ought to do a little legal stuff :
+
+        LEGAL STUFF
+        -----------
+This document is copyright (c) 1995, Michael John Currington.
+All rights are reserved by the author.
+
+Some of the material in this FAQ is has been contributed by others
+I accept no responsibility for what they have written, and neither
+do they !  I have tried to give credit to contributers, but if
+this is wrong, incorrect, or missing, sorry but tough,  EMail me
+and I will try to correct it.
+
+All trademarks are acknoledged.
+
+I accept no responsibility for what I have written or included in
+this FAQ, so there !
+
+Sorry about that, I hope I've excluded myself from any possible
+legal problems and resposibility :-).  And now on with the show...
+        
+
+
+        CONTENTS
+        --------
+
+        About This FAQ                                  (you read it, right?)
+        Legal Stuff                                     (deny everything)
+        Contents
+[2]     Sampling Related Questions
+[2-1]           What is the Nyquist frequency/rate?
+[2-2]           Is the Nyquist freq really enough?
+[2-3]           How Do I Change the Sampling Rate of a signal?
+[2-4]           Please could someone explain sampling theory?
+[3]     Effects using Delays
+[3-1]           How Do I create echo effects?
+[3-2]           What is Reverb, how is it different to echo?
+[3-3]           How do I get my echo/reverb to sound more realistic? [3-4]          
+What is chorus
+[3-5]           I would like to know about flanging.  Help
+[3-6]           Whats a Spring Delay Line?
+[4]     Volume Changing Effects
+[4-1]           Distortion
+[4-2]           (noise) Gating
+[4-3]           How do I do Compression?
+[4-4]           What is the best way to mix signals together?
+[5]     Filtering (coming soon)
+[6]     Frequency Changing Efects
+[6-1]           How do I change the pitch of a sound?
+[6-2]           How do I "time stretch" a signal
+[6-3]           What is Vocoding? How do I do it?
+[6-4]           What is Ring Modulation?
+[7]     Surround Sound (coming soon)
+[8]     Miscallaneous Effects
+[8-1]           What does the Aphex Aural Enhancer and similar units do?
+        References
+[A]     Internet Resources
+[A-1]           Other FAQ's
+[A-2]           News groups
+[A-3]           Mailing Lists
+[A-4]           FTP sites
+[A-5]           World Wibe Web (WWW) pages
+[B]     Software Packages
+[B-1]           Shareware / Public Domain Software
+[B-2]           Commercial Software
+[C]     Recommended Books and Papers
+[D]     General FAQ Questions and Comments
+[D-1]           How do I get this document
+[D-2]           How do I contribute to the FAQ?
+[D-3]           Help Desparately wanted...
+[D-4]           About the Author
+[E]     Credits
+
+
+
+
+[2]     Sampling Related Questions
+        --------------------------
+This section will deal with questions relating to the sampling of digital audio
+data.  Since the bulk of this FAQ is aimed at creating effects digitally using
+Digital Signal Processors, the text in this section will be of use to many
+starting on the road to effect production, but does not describe any effects as
+such.
+
+
+[2-1]   What is the Nyquist frequency/rate?
+        -----------------------------------
+One of the most important contributions to sampling theory (for any signal) is
+the idea of the Nyquist rate.  Sampling theory says :
+
+        If the highest frequency component in a signal is f (Hz) then the
+        signal should be sampled at the rate of at least 2f (Hz) for the
+        original signal to be completely represented by the discrete samples.
+
+And thats all folks, easy hu, well.....
+
+
+[2-2]   Is the Nyquist freq really enough?
+        ----------------------------------
+        [by Paul G Russell - thanks]
+        
+     Answer: Definitely NOT!
+
+     If tone is 1KHz, and we use Fs=2KHz
+     Then we are in BIG trouble if our sampling points lines up with the
+     zero crossings in the tone - Our output is NIL 0.0.0.0!
+
+     Even if we are off a bit we will get a reduced amplitude version of
+     the signal.
+
+     If we sample at slightly more that the Nyquist, we can get strange
+     effects, i.e. 2010Hz sampling 1000Hz will generate samples, that when
+     sent back to the D/A will give a varing amplitude 1KHz output, as the
+     sampling point catches the 1000Hz at different phase points. - approx
+     10Hz amplitude modulation I believe?
+
+     What the limiting factor seems to be is how long is your data
+     gathering: i.e. for a 100bps modem you sample for 10msec per bit. If
+     you misalligned on the phase of a tone near the Nyquist, you won't see
+     much of it for the bit period.
+
+     In our voice band application we use 7200, 8000, or 9600Hz to sample
+     audio in our radio band of 300-2700Hz. Many telephone line modems use
+     9600Hz to sample the phone line (~3000 to 3500 Hz bandwidth depending
+     upon the modem characteristics and phone line location), of course
+     this is partially chosen to be proportional to the baud rates.
+
+     And of course there are harmonics that may have to be gathered to
+     reconstruct your signal.
+
+     I've seen recommendations of Fs=2.5 Highest tone, This seems like a
+     reasonable value. But, I would recommend factors as high as your CPU
+     will allow if you are taking short audio blocks for processing. If you
+     are sampling over a long time, you may reduce the factor, with the
+     knowledge that signals near the Nyquist rate may suffer amplitude
+     distortion - less a problem for data than voice/music ??
+
+        Paul G Russell
+        St. John's, Newfoundland, Canada
+        paulr@neweast.ca
+
+Note :  The most important lesson to be learnt from this is that signals should
+        be filtered to limit frequencies, before sampling.  If the signal is
+        analog then an analog filter should be used (think about it...).
+        Even if you are sure the signal will not exceed the "safe frequency"
+        watch out for noise on the input which could possibly be of higher
+        frequency.
+
+
+[2-3]   How Do I Change the Sampling Rate of a signal?
+        ----------------------------------------------
+The purpose of changing the sampling rate is to retain the digital signal whilst
+changing the number of samples needed to store the signal.  The most popular
+uses of this sample rate changing are to convert CD audio data (44100Hz sample
+rate) to another format (ie DAT at 48000Hz), or to change from one computer
+sample rate to another (ie 11000Hz Amiga rate to 8000hz Sun format).
+
+Various methods of changing the sample rate were discussed on the csound mailing
+list, I have included the method that was thought to be best:
+
+[by Tom Ahola]
+        If the sample rate is to be drop to 1/2 you first have to
+        filter out the top half of the bandwidth (spectrum over Sr/4 !)
+        and after that you can throw away every second sample. (resampling)
+        If the lowpass filter is ideal (brick wall) no extra noise is
+        added, you only loose half the bandwidth.
+
+        In interpolation to double sample rate you first add a zero
+        between each sample (resampling). This gives no additional
+        white noise or any distortion, you just end up with a spectrum
+        that is doubled (imaged). To remove the undesired spectral image
+        you have to lowpass filter the resampled signal with a
+        filter with a bandwidth of Sr/4, where Sr is now the new sample
+        rate. If the filter is ideal, the signal is identical to the original
+        signal (no noise!).
+
+        You can interpolate/decimate by any integer, rational or decimal
+        number. Rational interp./decim. can be done efficiently by the
+        use of polyphase filters.
+
+        If somebody does interpolation by fitting a line or parabola
+        between two samples he or she has not read enough dsp books.
+        Theese methods will end up in aliasing and/or distortion.
+
+        +    Tom Ahola       Metrology Research Institute, Finland
+        +      E-mail: tom.ahola@hut.fi      WWW: http://www.hut.fi/~tahola/
+
+The Method of doing sample rate conversion tought in my DSP course was to
+perform a fourier transform (ie FFT or DFT) on the signal and then do a reverse
+transform, with extra zero padded values (increasing rate) or with less high
+frequency components (decreasing rates).  Ie the reverse transform is done on
+more or less frequency components than the original. I dont know whether this
+system is better than Toms method, or if the extra complexity has no actual
+benefit.  My gut feeling is that this is better, especially for non integer rate
+changes, but for down conversion I can see that some windowing may be needed.
+
+
+[2-4]   Please could someone explain sampling theory?
+        ---------------------------------------------
+[by Robert Bristow-Johnson]
+
+        Here is the mathematical expression of the sampling theorem:
+
+
+               x(t)*q(t) = T*SUM{x(kT)d(t - kT)}  .------.
+    x(t)-->(*)----------------------------------->| H(f) |--> x(t)
+            ^                                     '------'
+            |
+            '------ q(t) = T*SUM{ d(t - kT) }  (SUMming over all k)
+
+                      where d(t) = 'dirac' impulse function
+                        and T = 1/fs = sampling period
+                            fs = sampling frequency
+
+    q(t) = T*SUM{ d(t - kT) }  is a periodic function with period, T
+                             and can be expressed as a fourier
+                             series.  It turns out that ALL the
+                             fourier coefficients are equal to 1.
+
+    q(t) = SUM{ exp(j2n(pi)(fs)t }  (SUMming over all n)
+
+        Using the frequency shifting property of the fourier
+        transform,
+
+    F{x(t)*q(t)} = SUM{ X(f - n(fs)) }   (SUMming over all n)
+
+                      where X(f) = f{ x(t) }
+                        and F{ ... } is the fourier transform.
+
+        This says, what we all know, that the spectrum of our signal
+        being sampled is shifted and repeated forever at multiples
+        of the sampling frequency.  If x(t) or X(f) is bandlimited
+        to B (i.e. X(f) = 0 for all |f| > B) AND if there is no
+        overlap of the tails of adjacent images X(f), that is
+        B < fs - B, then we ought to be able to reconstruct X(f)
+        (and also x(t)) by low pass filtering out all of the images
+        of X(f).  To do that, fs > 2B and H(f) must be:
+
+
+           {  1  for  |f| < fs/2 = 1/(2T)
+    H(f) = {
+           {  0  for  |f| > fs/2 = 1/(2T)
+
+        The impulse response of the reconstruction LPF, H(f), is the
+        inverse fourier transform of H(f), called h(t).
+
+    h(t) = inv F{ H(f) } = sin[(pi/T) * t] / [(pi) * t]
+                         = (1/T) * sinc[ t/T ]
+
+                      where sinc(w) = sin[pi*w]/[pi*w]
+
+        The input to the LPF is x(t)*q(t) = T*SUM{x(kT)d(t - kT)} .
+        Each d(t - kT) impulse generates its own impulse response
+        and since the LPF is linear, all we have to do is add up the
+        impulse responses weighted by their coefficients, x(kT).
+        The T and 1/T kill each other off.
+
+        The output of the LPF is
+
+    x(t) = SUM{x(kT)*sinc[(t - kT)/T]} = SUM{x(kT)*sinc[t/T - k]}
+
+                                   (SUMming over all n).
+
+        This equation tells us explicitly how to reconstruct our
+        sampled, bandlimited input signal from the samples.  When
+        doing sample rate conversion, you must evaluate this
+        equation for times that are integer multiples of your NEW
+        sampling period, TN.  i.e. t = n*TN.
+
+        The sinc(t/T) function is one for t = 0 and zero for t = k*T
+        for k = nonzero integer.  This means that if your new
+        sample time, t, happens to land exactly on an old sample
+        time, m*T, only that sample (and none of the neighbors)
+        contributes to the output sample and the output sample
+        is equal to the input sample.  Only in the case where the
+        output sample is in between input samples, do the neighbors
+        contribute to the calculation.
+
+        Since the sinc() function goes on forever to + and - inf, it
+        must be truncated somewhere to be of practical use.
+        Truncating is actually applying the rectangular window (the
+        worst kind) so it is advantageous to window down the sinc()
+        function gradually using something like a Hamming or Kaiser
+        window.  In my experience, you'll need to keep the domain of the
+        sinc() function from -16 to +16 and sample it 65536 times in
+        that region.  This requires a 32 point FIR computation to
+        calculate one output sample.  Since it is symetrical, that
+        means 32768 numbers stored somewhere in memory.  When interpolating,
+        the integer part of t/T detemines which 32 adjacent samples to use,
+        the fractional part of t/T determines the 32 sinc() coefficients
+        to be used to combine the 32 samples.  There are other
+        ways of determining the LPF impulse response, some are published
+        (D. Rossum's paper at Mohank, R. Adams at some AES convention,
+        and some other Julius Smith paper), and some are tightly guarded
+        trade secrets.
+
+
+
+[3]     Effects using Delays
+        --------------------
+The following questions relate to effects that delay the signal to produce the
+required audio effect.  The two main exclusions from this section are digital
+filters (they use a form of delay), surround sound (it has its own section), and
+pitch shift (several methods exist for this).
+For the most part delay effects are ideally done in the digital domain, because
+memory chips make the perfect, noise free, store for data that is being delayed.
+In the analog domain bucket brigend delay lines (semi digital) and spring delay
+lines can be used.
+
+
+[3-1]   How Do I create echo effects?
+        -----------------------------
+A basic echo effect is obtained by taking the input signal and mixing the input
+with a delayed version of the signal.  The proportion of delayed signal to
+"clean" (straight through) signal determines how obvious the echo is, and the
+size of the delay changes the sound of the echo.
+
+A quick picture of how a delay is implemented follows :
+                                                 ___
+                                             *a |   |
+INPUT -------+--------------------------------->|   |
+             |                                  | + |----------> OUTPUT
+             |       ________________      +--->|   |
+             |      |                |     | *b |___|
+             +----->|  Delay d secs  |-----+
+                    |________________|
+
+Algorithmically this can be written :
+
+        out(t) = a * in(t) + b * in(x-d)
+        (where t is current time, d is delay)
+
+And for you pseudo code freaks :-)
+
+        /* this is for non real time (ie data in arrays) */
+        for Sample := 0 to NumberOfSamples
+        {
+                if ( Sample - DelayLength < 0 )
+                {
+                        Output[Sample] :=   a * Input[Sample]
+                }
+                else
+                {
+                        Output[Sample] :=   a * Input[Sample]
+                                          + b * Input[Sample - DelayLength];
+                }
+        }
+
+        /* this is for real time */
+        repeat( until we dont want to )
+        {
+                Input = Read_Input();
+                Output :=   a * Input
+                          + b * DelayMemory[DelayCount];
+                DelayMemory[DelayCount] := Input;
+                DelayCount := (DelayCount + 1) MOD DelayLength;
+        }
+        
+I dont want to say too much about the code or diagram, a and b control how loud
+the input and delayed signals sound at the output.  In the code it is assumed
+that the input and output are data arrays and that DelayMemory is a block of
+memory DelayLength samples (bytes, words, floats, or whatever) long.  NB the MOD
+operator gives the modulus (remainder) of the value (equivalent to % in C) and
+"wraps around" the delay count.
+
+Extra echos can be added by extending the length of the delay and by "tapping
+off" values at various points.  Ie 2 stages :
+
+                                                * a  ___
+INPUT -------+------------------------------------->|   |
+             |                                  * b |   |
+             |                  +------------------>| + |----------> OUTPUT
+             |       _________  |  _________    * c |   |
+             |      |         | | |         |  +--->|___|
+             +----->| Delay 1 |---| Delay 2 |--+
+                    |_________|   |_________|
+
+To create gradually fading echos we can use lots of individual delays as above,
+or put the delayed signal back into the system - this is the reverb effect:
+
+
+[3-2]   What is Reverb, how is it different to echo?
+        --------------------------------------------
+In its simplest form, reverb is echo, but with the mixed signal fed-back into
+the the input to the delay :
+                  ___
+              *a |   |
+INPUT ---------->|   |
+                 | + |-------------->--------------------------> OUTPUT
+            +--->|   |                             |
+            | *b |___|       ________________      |
+            |               |                |     |
+            +-----------<---|  Delay d secs  |<----+
+                            |________________|
+
+The effect (oh dear!) of the feedback is to make it sound like there are
+multiple echos.  For example if a=1 and b=0.5, and we apply a signal, initially
+the output will be the same as the input.  After the delay time has elapsed, a
+delayed version of the signal will be mixed with the input, giving a single echo
+at 0.5 time its original amplitude, and the current input.  A time d seconds
+later, the single echo signal will have been delayed, giving the original signal
+(delayed twice) at 0.25 its original amplitude, the signal from d second
+previously at 0.5 times its original amplitude, and the current input. This
+process continues, the older a signal, the more times it has passed around the
+loop, and the lower its amplitude, so multiple fading echos are produced.
+
+Algorithmically :
+        out(x) = a * in(x) + b * out(x-t)
+
+Care must be taken with reverb when choosing the value for b, if b is larger or
+equal to one, then a signal will in theory circulate the delay loop and be
+amplified each time it goes round the loop.  In practice, the signal overloads
+the output value, resulting in a nasty feedback noise (similar to feedback
+screech heard at gigs when singers decide that the bast place to wave a
+microphone is next to their monitor speaker) and possible destruction of
+speakers!
+
+High values of b (getting close to 1) can produce cool effects for transient
+sounds (like drums) and muddle other sounds.  More subtle reverb adds ambience
+to sound (especially voice).  Be careful not to get that bathroom sound unless
+thats what you want  :-)
+
+Very small values of d (less than a few milliseconds) makes it impossible to
+hear
+the individual echos, and instead the reverb becomes a filter.
+
+
+[3-3]   How do I get my echo/reverb to sound more realistic?
+        ----------------------------------------------------
+The answer to this question is provided by Arun Chandra, taken (with permission)
+from a document he sent me which was intended for composers who were interested
+in implementing algorithms without using too much maths.  Other parts of the
+document may be included in the section on filtering (when I write it!).  Thanks
+Arun.
+
+        M.A. Schroeder, in the 1960s and 1970s, had suggested two models
+        for "realistic reverberation".  The first model was to use five
+        allpass filters cascaded together, i.e., the output of the first
+        was the input to the second, the output of the second was the input
+        to the third, etc.
+        The algorithm for an allpass filter is:
+
+                y(n) = -g*x(n) + (1 - g*g) * ( x(n-D) + g * y(n-D) )
+
+        [where: n       the current sample number
+                y(n)    the n-th output sample
+                x(n)    the n-th input sample
+                D       delay in samples
+                g       gain (determines reverb time)   ]
+
+        As you can see, the latter part of an allpass filter is a comb
+        filter.
+
+        [Mike's Note : the comb filter is a type of reverb, its
+                       algorithm is  out(t) = in(t-d) + b * out(t-d)       ]
+
+        The second model he suggested was to use four comb filters in
+        parallel, sum their outputs, and then pass their outputs through
+        two allpass filters in sequence.  These two filters designed by
+        Schroeder are the most commonly used ones in digital synthesis.
+
+        James A. Moorer built on the work of Schroeder. He noticed that
+        Schroeder's filters tended to keep the high partials of a sound
+        ringing, and so suggested that the comb filter be used with a
+        built-in low-pass filter:
+
+        y(n) = x(n-D) + g2 * ( y(n-D) + ( g1 * y(n-(D+1)) ) )
+
+        He then suggested a model for reverberation that involved six combs
+        with built-in low-pass filters run in parallel, their outputs are
+        summed, and then sent to an allpass filter.
+
+        A problem manifest by all three of these reverberation units (first
+        noticed by Schroeder) is their "lack of early echoes".  Remember
+        that the samples are delayed by the magnitude of D.  This means
+        samples that are less than D are ignored by the reverberators.
+        Schroeder suggested a solution, which was to add to the source
+        sound some initial delays in the form of an FIR filter:
+
+                y(n) = a1 * x(n) + a2 * x(n-D1) + a3 * x(n-D2) + ... aN * x(n-N)
+
+        These delays would range from 0 to 80 milliseconds.  Moorer found
+        some appropriate coefficients for either 7 or 19 "early echoes".
+
+
+[3-4]   What is chorus
+        --------------
+Chorus is so named because it makes it sound as if several instruments, or
+whatever, are playing at the same time but at slightly different pitches. With
+vocals it sounds as if a chorus of people are singing.
+
+In implementation chorus is very similar to echo.  The block digram is the same
+as the one for echoing.  The input is mixed with a delayed version of the input
+to produce the output, but in chorusing the sample rate is being changed
+continuously.
+
+Algorithmically we can describe this as :
+        out(t) = in(t) + in(t - d * f(t) )
+        (where d is the length of the delay at the "normal" sampling frequency,
+         and f(x) is the varition of the sampling frequency).
+
+The sample rate is changed quite slowly, this rate of the chorus effect is
+typically in the region of 0.1Hz to 5Hz, and the sample rate is typically
+changed in a sine or triangular wave pattern.  The depth of the effect
+determines how much the sample rate changes by, a typical effect would go from
+twice the normal sampling frequency to half the normal frequency. ie f(x) ranges
+from 2 to 0.5 and back, between 5 and 0.1 times a second.
+
+The deviation of the pitch at any time (t) is proportional to
+log[1 - d * f'(t)], where f'(t) is the derivative of f(t).
+
+Chorus in real time is easy, if we have control over when we sample the inputs
+then this is easily changed to give the chorus effect.  If the data is already
+sampled at a fixed rate then some sort of interpolation/ averaging may need to
+be done to produce the output samples (see the section on resampling).
+
+The chorus effect can be enhanced by adding different sized delays (as can be
+done in a basic echo effect), this increases the number of "voices" singing with
+the original and makes for a richer effect - ie. a 3 stage chorus :
+
+        out(t) = in(t) + in(t - d*f1(t) ) + in(t - d*f2(t) ) + in(t - d*f3(t) )
+
+
+[3-5]   I would like to know about flanging.  Help
+        ------------------------------------------
+Flanging is exactly the same as chorus, except the block diagram is the same as
+reverb rather than echo.  The sample rate is changed in the same way as chorus.
+The flange effect gives a more discordant effect than the chorus and has a
+metallic sound.
+
+
+[3-6]   Whats a Spring Delay Line?
+        --------------------------
+The spring delay line is one of the oldest "electronic" effects, although not
+exactly digital technology (and barely electronic).  A line driver (often a
+speaker) is hooked to a cylindrical spring with its other end connected to a
+reciever (often a speaker!), the whole construction is kept flat.  When the
+driver is given a sound signal the spring is moved and a little time later the
+movement reaches the reciever where it is converted back into an electrical
+signal.  This method of delaying sounds can still be found on some guitar amps,
+if a clunking noise is heard evertime the amp gets knocked then chances are its
+the spring delay line (useless fact #18327).
+
+Look on "Leper's Guitar Effects Schematics" www pages at
+(http://www.wwu.edu/~n9343176/schems.html) for a further explanation (and lots
+of cool analogue effect circuits).
+
+
+
+[4]     Volume Changing Effects
+        -----------------------
+This section will discuss effects that changes the sound of a signal by altering
+its volume (only).
+
+
+[4-1]   Distortion
+        ----------
+The best place to read about distortion is in the guitar effects faq, which has
+a whole section on this effect and analog implementations.  Many distortion
+methods can be done in the digital domain by a look-up and possibly a filter.
+More complex forms of distortion such as valve emulation are not very well
+understood and so it is difficult to reproduce using anything but valve
+"technology".
+
+As you may have guessed I need more material for this section, if you have
+implemented good disptortion effects (especially in the digital domain) then get
+in touch!!!
+
+
+[4-2]   (noise) Gating
+        --------------
+The idea of simple gating is simplicity itself.  If the input signal fall below
+a set threshold level, then turn the output off.  So that the effect does not
+distort inputs that should not be gated, a hold time needs to be added.  If a
+signal falls below a set threshold and stays below this value for time 'th' (the
+hold time) then turn the output off until the input goes above the threshold
+level again.  This is the basic noise gate.  Used with electrically noisy
+equiptment (such as old analogue synths and guitars) the noise gate will remove
+background hiss when a note is not being played.
+
+The above noise gate has some problems, if a graduallly fading note is played
+then the nosie gate may cut off the not abruptly when the volume falls below the
+threshold.  Because of this a release time 'rt' is introduced.  Instead of
+cutting off the output abruptly when the sound goes below the threshold and the
+hold time is exceeded, the sound is now faded during the release period.
+
+Hysterisis can also be introduced so that the volume needed to turn on the
+effect is higher than the volume that the signal must fall below before the gate
+turns off.
+
+The noise gate can be used as an effect by making the threshold level quite
+large, so that only loud parts of a sound can be heard.
+The final addition to a good gate is an attack time.  Instead of turning the
+gate full on as soon as the input exceeds the threshold, the output level is
+gradually increased over the attack time.
+
+By tweaking these parameters drums can be made to sound a lot tighter, guitars
+can be made to sound more funky, or you can just use it to make noisy
+instruments quiet when they should be.
+
+
+[4-3]   How do I do Compression?
+        ------------------------
+Ahhh, the question that started the faq...
+A compressor reduces the volume of loud sounds and quiet sounds are increased in
+volume.  This results in a much more even volume level, although care must be
+taken or elese everything will be at the same volume.
+Like gating there is an element of time delay so that a sound with a rapid
+"attack" (like a snare) will still sound dynamic.
+
+Compression is applied to almost all radio stations (to cover hiss??) and most
+pop music (to a lesser extent) so that your stereo is not damaged by transient
+signals.  Despite these frowned upon practices, compression is very useful when
+recording vocals so that the singer does not have to sing at the same volume all
+the time :-)
+
+For an explanation of the effect I include a post which was sent to Comp.music
+after I asked how to do compression:
+
+[by Frederick Umminger, thanks]
+        Take the absolute value of your signal and low-pass filter it
+        with a cutoff frequency of 15-30hz, and probably a pretty steep
+        slope. The result will track the volume of your signal.
+        Now compute
+                out(t) = in(t)*low(abs(in(t)))^A
+        for A = -1, all dynamics should be removed. A= 0 is no effect,
+        and A > 0 heightens the dynamics. You'll need gating or
+        the compression will amplifying all of the background noise
+        during moments of silence.
+
+
+[4-4]   What is the best way to mix signals together?
+        ---------------------------------------------
+Can someone help out here with references or text?
+
+
+
+[5]     Filtering (coming soon)
+        ---------
+As soon as I get time, I'll be writing some stuff about filtering.  I would like
+to cover the following areas:
+        Simple filers (high pass, low pass, band pass)
+        Equalisation
+        DC removal
+        Parametric Equalisation
+        Phaser effect
+        Wah-wah effects
+        ??? Ideas ???
+
+
+
+[6]     Frequency Changing Efects
+        -------------------------
+The effects in this section all noticably change the pitch of the effected
+signal.
+
+
+[6-1]   How do I change the pitch of a sound?
+        -------------------------------------
+There are several different ways of changing a sound's pitch.  The best method
+to use depends on what the sound is, what quality is required, and how much
+processor power you have.  Here are the main methods of pitch changing :
+
+    -   If the signal you want to pitch shift is speech then you
+        can split the signal into small blocks and then add or remove blocks
+        to make the speech last longer/shorter (more/less samples).
+        Then to speed up, play at a faster rate (or convert the sample rates
+        [2-3]).  The sections must be split at zero crossings or cross faded
+        so that clicks are not produced between blocks.
+        Detecting the pitch sections (pitch pulses) requires knowledge of how
+        speech is produced and is the main obstical in using this method.
+        Auto-correlation is probably the most popular way of detecting these
+        sections although it requires lots of computing power.
+
+    -   For any other type of signal a version of the chorus can be used.
+        The chorus effect [3-4] changes the pitch of a signal by changing the
+        sampling frequency, causing the time to "wobble" around it's normal
+        value.  If a sawtooth wave is used to modulate the sampling
+        frequency then the signal is pitch shifted up (or down).  When the
+        edge of the sawtooth occurs there will be a click on the output.
+        To get around this some form of filter could be used, or for better
+        results two flangers can be used.  If their modulation signals are
+        out of step with each other then we can switch the output between
+        the two flangers so that we avoid the click.  In order to prevent
+        clicks when the change of output source is made some form of filtering
+        may be needed.
+
+    -   The final method of pitch shifting is the most complex (oh no!) but
+        gives the best quality results.
+        We can transform the input signal into the frequency domain (using
+        a fourier transform) and stretch the frequency information, so that
+        the frequencies of the signals are changed.  Reverse transforming this
+        new frequency domain representation will give a pitch shifted signal.   
+
+
+[6-2]   How do I "time stretch" a signal
+        --------------------------------
+Time stretching (where a sound is made to last longer, but keeps the same pitch
+as the original) is exactly the same process(s) as pitch shifting. If we need to
+make a sound twice its current length, pitch shift the sound to twice its
+original frequency (ie one octave up) but play back the data at half the
+original rate.  The same can be done for shortening lengths of sounds but by
+halving the frequency and playing at twice the original rate.
+
+When the change in time requires more than a simple doubling or halving of the
+frequency, interpolation of the pitch shifted samples is needed.
+
+
+[6-3]   What is Vocoding? How do I do it?
+        ---------------------------------
+Vocoding is an effect that kind of superimposes your voice (usually) over the
+top of another instrument.  Used effectively it makes it sound like your
+instument is talking!  Probably the best (and first?) uses of this effect can be
+heard on Kraftwerk records, their material is also well recomended if you need
+inspiration for electromic type sounds, "The Man Machine" is sooooo cool. Sorry,
+I digress, so without much further ado, on with the question...
+
+[The following explanation of vocoding is by Eric Harnden]
+
+        From: HARNDEN@AUVM.BITNET (ronin)
+        Subject: vocoder tutorial
+        Date: 18 Oct 91 12:47:21 GMT
+
+        someone has asked about vocoders here, and there have been various
+        levels of reply, some of which were aimed at providing manufacturer
+        info,and a couple of which gave a little bit of operational info. i
+        thought i'd expand on the operational side, for those who might be
+        confused, or just ignorant, about a vocoder's workings. if you already
+        know, ignore this and go read the rest of your mail.
+
+        a vocoder's main equipment consists of two sets of bandpass filters.
+        these are filters that pass only a selected range of frequencies, the
+        center of that range known as the center frequency, and the breadth of
+        that range known as the bandwidth. a single set of these filters
+        constitutes a filter bank whose center frequencies and bandwidths are
+        designed to provide coverage for pretty much the whole range of hearing.
+        one possible configuration for example would use octave bandwidth
+        filters, with their center frequencies set an octave apart. one octave
+        bandwidth filter might have its center frequency set to 1000Hz, for
+        instance. it's nearest upper neighbor would be centered at 2000Hz, and
+        its nearest lower neighbor would be centered at 500Hz. the frequency
+        response curves (the map of their pass-bands) would overlap each other
+        at the points a half-octave between each pair, providing filter coverage
+        for the entire range from about 250Hz to 3000Hz. of course, the narrower
+        the filter bandwidth (and therefore the more plentiful the filters in
+        the bank), the more precision the bank has, since each filter will
+        differentiate a smaller range of frequencies.  now... a signal, say from
+        a synthesizer (let's call it the source), is passed into one of these
+        banks. the signal is applied in parallel to all of them at the same
+        time, and the output of each passed through a gain control element
+        (a VCA) before the signal is recombined. so far, not unlike a graphic
+        EQ, except that the VCAs don't actually boost the signal from a filter,
+        just provide controllable attenuation. the VCAs are normally off. the
+        application of a control to any one of the VCAs will cause a certain
+        amount of the frequency selected for by the bandpass filter feeding it
+        to be passed to the output:
+
+        source---->filter 1---->vca 1-----|
+                |->filter 2---->vca 2-----|---mix---->out (whatever portion of
+                |->filter 3---->vca 3-----|                the signal is passed
+                                 |                         by filter 3)
+        control------------------|
+        (applied to vca 3 only for this example)
+
+        got it? good. now, we've got another signal, say from a microphone
+        (let's call it the control), that is passed through another filter bank
+        that is matched to the first one... its filter parameters are exactly
+        the same as those of the first bank (the one through which the source is
+        passed). the output of these filters, though, rather than being passed
+        through VCAs which control their final gain, is measured to determine
+        their gain. in an analog vocoder, this is simply done by rectifying the
+        output from each filter. what you get is a DC voltage whose amplitude is
+        proprtional to the amount of control signal that got through that
+        filter, which is of course proportional to the amount of that frequency
+        range which was present in the spectrum of the control.
+        the DC control voltage associated with ecah control filter is applied to
+        the VCA of each matching source filter, so that the amount of energy
+        present in the control signal spectrum that makes it through any given
+        filter in the control filter bank determines the amount of energy from
+        the source signal that passes through the matching filter in the source
+        filter bank that is allowed through to the output. in other words, the
+        two signals' spectra are separated to some degree, and the
+        reconstruction of the source spectrum is made contingent upon the
+        relative weighting of the assiociated portions of the control spectrum.
+        put yet another way, the formant envelope characteristic of the control
+        is imposed on the spectrum of the source.
+        here's the final diagram, for one matched filter pair:
+
+
+
+        synth---->filter------------------------------------------>vca---->out
+                                                                   /|\
+                                                                    |
+                                                                    |
+        mic---->filter---->amplitude to control level conversion----|
+
+
+        any questions?
+
+        -------------< Extremism in the Pursuit of Good Noise is no Vice
+>-------
+        Eric Harnden (Ronin)
+        <HARNDEN@AUVM.BITNET> or <HARNDEN@AUVM.AMERICAN.EDU>
+        The American University Physics Dept.
+        Washington, D.C
+
+When performing vocoding digitally the filters are usually replaced by fourier
+transforms of the signal, and it is the individual frequency components in the
+transformed signal that are modified.
+
+
+[6-4]   What is Ring Modulation?
+        ------------------------
+Ring Modulation is multiplication of two signals together to make the third
+(output) signal.
+
+so      out(t) = in1(t) * in2(t)
+
+Usually one of the signals is from the "outside world" and the other is a sine
+wave generated "inside" the effect.
+
+ie      out(t) = in(t) * sin( 2*PI*t*f )
+        (if t is time and f is the frequency of the "internal" modulating
+         signal)
+
+In frequency terms the tones produced are the sum and product of the original
+frequencies.  So if in(t) = 500hz tone & f = 300hz then out(t) will have 200hz
+and 800hz signals.
+It should be ensured that the input signal is zero offset (ie zero when no
+signal present) or else some 300hz tone will be output at all times.
+
+Some effects units and analogue synths (where this effect is most widely used)
+use a single XOR gate to perform the multiplication digitally.  To do this in
+dsp we would need to convert the input and modulating signal into one of two
+values (1 or 0) and then xor them together.  Filtering is probably needed on the
+output signal, as the signals are badly distorted, which will have given rise to
+some unwanted output frequencies.
+
+
+
+[7]     Surround Sound (coming soon)
+        --------------
+Likely sections are:
+        How do I encode/decode dolby(tm) surround sound?
+        Is pro-logic like normal surround sound?
+        What other surround sound coding schemes exist?
+I would like to include the following information if anyone can provide pointers
+or help:
+        Where can I get surround sound coded files?
+        How does Q sound get surround sound from two speakers?
+
+
+
+[8]     Miscallaneous Effects
+        ---------------------
+
+[8-1]   What does the Aphex Aural Enhancer and similar units do?
+        --------------------------------------------------------
+Apparently they make music sound more dynamic and give a professional edge to
+the sound.
+As far as I can remenber, from an explanation I read a while back, these units
+distort the high frequencies of the input signal to create more "top end", ie
+they create more high frequency signals without just boosting the existing
+frequencies like eq does.  While this seems to make sense to me I am sure there
+is some extra processing being done (??) in these units.
+
+
+
+
+        References
+        ----------
+In this peliminary version of the FAQ there are few references in the actual
+text, hopefully this section will provide pointers to information on what you
+are interested in.  Much of the information below is incomplete (or wrong), I am
+relying on you experts out there to help me get it right :-)
+
+p.s. Remember I am will not be reponsible for the accuracy of any information in
+     this FAQ.  If its wrong, sorry, but the only thing you can do is help me
+     get it right in the future.  (Just in-case you forgot)
+
+
+[A]     Internet Resources
+        ------------------
+
+[A-1]   Other FAQ's
+        -----------
+Other related FAQ's (I hope I did not cover too much common ground) are:
+
+DSP FAQ         - The FAQ for the Comp.dsp newsgroup.  Covers all types of
+                  DSP including some audio.  Also gives addresses and details
+                  of DSP chip/software vendors/products.  Occasionally
+                  posted to comp.dsp but only version I have found was last
+                  updated over a year ago.  Available at rtfm.mit.edu ftp site
+                  and evans.ee.adfa.oz.au (131.236.30.24) pub/dsp/dsp-faq.help.
+Guitar FX FAQ   - Details various effects (mostly as descriptions of sound
+                  rather than implementation) for guitars.  Good section of
+                  various methods of producing distortion.
+                  Updated regularly (posted to rec.music.makers.builders,
+                  rec.music.makers.guitar, and alt.guitar news groups), and
+                  by ftp to rtfm.mit.edu.
+CSound FAQ      - Frequently asked questions for the CSound music synthesis
+                  program.  Available via www at :
+                  http://coos.dartmouth.edu/~dupras/Csound/Csound.faq.html
+                  (should also be at ftp.maths.bath.ac.uk).
+
+All the above FAQ's should be available by anonymous ftp to rtfp.mit.edu (login
+: anonymous).
+
+
+[A-2]   News groups
+        -----------
+Almost certainly the best place to get answers to questions or to discuss stuff.
+
+        [winge mode on]
+In ALL case READ THE FAQ before posting questions.  If theres one thing that
+will get you flamed its posting questions that are blatently in the FAQ.  The
+other way of getting flamed for sure is to ask a question that was asked and
+answered only a week before, so please read for a while before posting. Since
+the amount of noise on some groups is high interesting posts get lots of good
+responses (usually).  If you get answers to questions relevent to the FAQ then
+please mail them to me for future FAQ's, thanks.
+        [winge mode off]
+
+Here are my favourite groups for Audio effects stuff:
+    Comp.dsp          - the best group to read if into dsp (oh really?) or
+                        implementations of the effects described here.
+                        Postings are archived at :
+                        gopher://bellona.cs.rice.edu:70/11/SPIB/news .
+    Comp.music        - Discussions on here tend to cover a lot of stuff.
+                        Sometimes taken over by midi questions, sometimes
+                        very interesting, sometimes lamer city :-)
+                        Questions on when to use effects tend get good answers
+                        (just dont expect definite answers, things like
+                        when to use compression will get 5 conflicting
+                        opinions).
+    Rec.audio.tech    - Tends to cover less digital techniques than the other
+                        groups, but if you need to know about analogue,
+                        speakers, or surround sound then this is probably
+                        the best group.
+
+
+[A-3]   Mailing Lists
+        -------------
+Numerous e-mailing lists exist on the internet where people with similar
+interests can send messages which are then forwarded to everyone else on the
+list (like a news group but more personal).  Some of these lists are moderated
+(messages are checked by a single person before forwarding) and of course since
+you have to subscribe, you can also be kicked off a list.  As a result the
+amount of rubbish posted is less than most news groups.
+
+Here are a few mailing lists relevent to this FAQ :
+
+CSound List     - concerned with the csound sound synthesis program.
+                  See the software section for csound.  Whilst discussion
+                  is centered around csound issues, csound can do effects,
+                  and help can be found here with these.
+                  subscribe csound-list-request@maths.exeter.ac.uk
+
+
+[A-4]   FTP sites
+        ---------
+The sites listed below are the ones that have quite a lot of relevent files, not
+just general sites with a few programs.
+
+ccrma-ftp.stanford.edu  - Computer music department at Stanford Uni (US).
+                          Site contains some effects related files and sound
+                          synthesis stuff.
+                          Hunt around for files, some good files on filtering
+                          can be found in pub/dsp.
+ftp.hyperreal.com       - Directory /raves/music/machines/information/effects
+                          contains some files about effects, mostly collected
+                          from the internet.  A few popular commercial effects
+                          units are also discussed.
+                          Below this directory is a lot of electronic music
+                          bits and pieces.
+ftp.analog.com          - Analog Devices ftp site.  Contains software for
+                          Analog Devices DSP's and has some example code for
+                          popular DSP operations (ie Fourier transforms and
+                          filtering).
+ftp.maths.bath.ac.uk    - CSound ftp site.  Should have the major versions of
+                          CSound (and source) as well as some example files.
+
+
+[A-5]   World Wibe Web (WWW) pages
+        --------------------------
+
+http://www.wwu.edu/~n9343176/schems.html
+                        - Contains electronics schematics (circuit diagrams)
+                          for lots of popular audio effects.  Most of the
+                          circuits are 'classic' commercial effects, so are
+                          pretty simple.  It even may be possible to convert
+                          some into their digital (DSP) equivalents.
+
+
+
+[B]     Software Packages
+        -----------------
+
+[B-1]   Shareware / Public Domain Software
+        ----------------------------------
+
+Filterkit       - Filtering and resampling program.  Written for Unix machines,
+                  but C code is included which should complile with little
+                  effort for other platforms.
+Cool Edit       - Microsoft Windows based shareware sample editor.  Implements
+                  a number of audio effects which can be applied to samples.
+                  I have yet to use this package but is widely thought to be
+                  the best Windows sample editor, although rather slow. Gold
+Play       - Shareware competitor to Cool Edit.  Implements a few simple
+                  effects - echo, reverb, panning, filters, resampling.  Also
+                  provides the user with facilities for programming their own
+                  simple effects.
+                  Operations are applied to sounds very quickly.
+CSound          - Music synthesis package available for most popular machines
+                  (PC, Unix, Atari, Next, Power PC).  Powerful but difficult to
+                  use.  From a text description of a music score, and
+                  description of the instruments you want to use CSound can
+                  produce synthesise a whole song.  Sampled sounds can be used
+                  as the basis for sounds, and effects applied to the sound, or
+                  sounds can be produced by describing them mathematically.
+                  CSound implements its own langauge in order to be such a
+                  powerful package and so has a steep learning curve.
+                  Package is public domain and constantly evolving.  Users are
+                  recommended to join the CSound mailing list (section A-3).
+                  The offical ftp site is ftp.maths.bath.ac.uk.
+Effect          - Written for an article in Dr Dobbs Journal about realtime
+                  audio effects.  Two versions of the code are included,
+                  assembler for ???? DSP chips, and C for IBM PC (uses Microsoft
+                  Sound Card).  Available by ftp from ftp.mv.com, file
+                  /pub/ddj/1994.07/audio.zip.
+
+
+
+[B-2]   Commercial Software
+        -------------------
+
+The following commercial software packages provide digital recording facilities
+and implement some audio effects.  More details on these packages from users
+would be much appreciated, as well as details of other pieces of software.
+
+Acoustica (1.0) - Microsoft Windows based sample editor.  Concentrates on
+                  adding effects to samples, effects implemented include -
+                  Compressor, echo, reverb, flange, chorus, stereo
+                  enhancement, time stretch and equalisation.
+                  Effect processing can be very slow (on a 33mhz 486sx).
+                  A demo version of this program is available from most large
+                  ftp sites (eg oak.oakland.edu).
+
+S.A.W           - Software Audio Workshop.  PC based sound recording software.
+                  Provides a replacement to traditional 4 track recorders,
+                  with advantages of digital editing.  Add on effects "racks"
+                  are available (only one at time of writing) allow affects
+                  to be added to sounds.
+                  The currently available version supports stereo recording
+                  (with simultaneous playback if soundcard allows it) and
+                  four stereo tracks mixed together on playback.  It is
+                  rumoured that future versions will support 16 tracks.
+                  This program needs a high end PC (fast disk, 8Mb memory,
+                  and 486 essential), MS Windows, and good quality soundcard
+                  is recommended.
+                  A demo verion is avaliable by ftp to ftp.vortex.com .
+
+Sound Forge (3.0)- High specification sample editor / processing program for the
+                  PC.  This package is the business when it comes to effects,
+                  with more effects than any other package that I know of.
+                  At $495 it seems a little overpriced, but professional uses
+                  may feel this is justified by the sheer range of effects.
+                  A crippled demo version of the program, which is well worth a
+                  look, is avaliable via ftp (from oak.oakland.edu).
+
+Logic Audio     - Mac based digital audio recording system.  Requires dedicated
+                  sound card.
+                  More details please....?
+
+
+
+[C]     Recommended Books and Papers
+        ----------------------------
+[ Since I only have one audio related book (Ifeachor and Jervis), I need
+  recommendations and reviews.  Thanks. ]
+
+General Books on DSP :
+
+        Ifeachor E.W. and Jervis B.W. (1993).
+        "Digital Signal Processing - A Practical Approach".  Addison-Wesley
+                - good basic dsp book with lots of examples.  Some audio
+                  processing included.
+
+        Oppeheim and Schaffer
+        "Discrete-Time Signal Proceesing"  Prentice-Hall
+
+        Rabiner and Schaffer
+        "Digital Processing of Speech Signals"
+
+
+Audio Related books :
+
+        Moore F.R.
+        "Elements of Computer Music"
+                - well recommended as being a good book on audio synthesis
+                  and effects.  C source included.
+                  [if you know where I can get this in the UK please mail me!]
+
+        Strawn J. (ed)
+        "Digital Audio Signal Processing".  A-R Editions Inc.
+        ISBN 0-89579-279-6.
+                - contains technical reference on phase vocoders.
+
+        Pohlmann, Ken
+        "Digital Audio" and
+        "Advanced Digital Audio".  Howard Sams.
+
+
+Important Journal Papers :
+
+        The Computer Music Journal (CMJ) and the Audio Engineering Society(???)
+        (AES) journal both carry relevent articles/papers.  Please mail me if
+        you have contact addresses.
+
+
+
+[D]     General FAQ Questions and Comments
+        ----------------------------------
+
+
+[D-1]   How do I get this document
+        --------------------------
+Err, if you didn't already notice you have the document already.  But I suppose
+you may be after the latest version (if there is one), so here are the best ways
+of getting it :
+
+(the below should apply with the next version - v1.0 posted to Comp.dsp only)
+
+USENET  - I will be posting the released version every 2 weeks or so to:
+                Comp.dsp        - the birthplace of this FAQ
+                Comp.music
+                Rec.audio.tech
+          If you think it should go anywhere else, then please tell me, but
+          I don't want it going to every music group as it has a fairly
+          technical content.
+FTP     - No site as yet, can anyone help ?????
+EMAIL   - Please only mail me with correction, additions, contributions, and
+          comments.  I have to use my works email account (for the moment)
+          and have not the time or inclination to mail this to everyone who
+          asks for it...sorry.
+          It may get sent to a list server, if there are any suitable ??? WWW    
+- A html version may get done if somewhere to put it can be found.
+
+
+[D-2]   How do I contribute to the FAQ?
+        -------------------------------
+Send me an email my address is curring@ferndown.ate.slb.com.
+
+As this is only the first version of the FAQ, I have not covered some large
+areas of Audio FX.  I want this FAQ to be as comprehensive as possible, and so
+need input from you the reader.
+
+Comments, corrections, and pointers are greatfully recieved, text that can be
+included in future versions will be rewarded with eternal gratitude (maybe).
+Please note that I may well trim, edit, and change any contributions, and I am
+still the copyright holder of all parts of the text.  Contributions will be
+acknoledged where possible.
+Thanks.
+
+
+[D-3]   Help Desparately wanted...
+        --------------------------
+As well as needing contibutions (text/comments - although money is also fine!) I
+also need help with a few other bits:
+
+If anyone can help get ftp site(s) to hold this faq PLEASE get in touch.
+
+I also need someone who would be prepared to proof read the faq and make changes
+concerning grammar and spelling - its a dirty job but some's gotta do it.
+
+Finally I really need internet access from home, if any internet providers in
+England (esp Bounemouth area) want to get in touch please do.  I need a CHEAP
+connection with email, usenet news, and possibly WWW capability.  If I can avoid
+long distance BT calls thats even better :-)
+
+
+[D-4]   About the Author
+        ----------------
+I'm Michael John Currington, a 22 year old Software Engineer from England. I
+have a degree in Electronic Engineering with Computing from Sheffield
+University.  Currently I live in the south of England working for Schlumberger
+Technologies.
+
+In my spare time I listen to all sorts of music (from Portishead to The
+Wildhearts), compute, drink beer, play football (Soccer), and watch the X-files,
+although not all simultaneously.
+This FAQ is also written in my spare time (it is not assocated in any way with
+my employers).  Because of this I have to reply to mails during my spare time,
+which means you may have to wait a few days/weeks if you write to me, it also
+means I have no time to answer general questions unless directly FAQ related.
+
+To contact me use one of the following methods:
+
+        Email        -  curring@ferndown.ate.slb.com
+                        Remember this is a work account so the speed of reply
+                        will depend on how much spare time I have - ie be
+                        prepared to wait - sorry.
+        Snail mail   -  Michael Currington
+                        16 Leigh Gardens
+                        Leigh Road
+                        Wimbourne Minster
+                        Dorset
+                        England
+                        BH21 2EW
+
+
+
+[E]     Credits
+        -------
+Thanks to the following people for helping, encouraging, and contributing :
+
+        Robert Bristow-Johnson  robert@audioheads.win.net
+        Arun Chandra            arunc@ux1.cso.uiuc.edu
+        Oyvind Hammer           oyvind.hammer@notam.uio.no
+        Eric Harnden            harnden@auvm.bitnet
+        Paul G Russell          paulr@neweast.ca
+        Frederick Umminger      umminger@math.berkeley.edu
+
+        
+Thanks for moral support and sugestions :
+
+        Ho Chi Bun              h9207737@hkuxa.hku.hk
+        Chip Burwell            cburwell@cts.com
+        Andrew Gaylard          gaylard@sixes-n-sevens.ee.wits.ac.za
+        Stefan Huy              huy@tnt.uni-hannover.de
+        Steve Miller            millersg@dmapub.dma.org
+        Bill Thompson           bth@eznet.net
+        
+
+Thanks also to anyone I missed out (sorry), keep up the good work.
+
+
+Until next time ....
+
+

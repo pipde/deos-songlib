@@ -1,0 +1,9 @@
+#!/bin/bash
+if [ "$1" = "" ] ; then
+    echo you must specify a sound card number!
+    cat /proc/asound/cards
+else
+    rm -f track.wav
+    ecasound -c -b:256 -r -f:16,2,44100 \
+	  -a:1 -i alsahw,$1 -o track.wav
+fi

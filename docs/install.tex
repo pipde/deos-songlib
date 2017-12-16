@@ -1,0 +1,190 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{Songlib: installation of instrument sample packs}
+
+\title{Songlib: installation of instrument sample packs\\
+\date{Revision Date: \today}}
+
+\author{written by: Song Li Buser}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{install.pdf}}
+\W\htmlrule
+
+\section*{Installing the \songlib\ free sample repository}
+
+\Songlib\ is a sample-based music development library. Thus
+the quality of the output greatly depends on the quality
+of the input samples. The \songlib\ free sample repository
+({\it songlib-fsr}) is provided with no restrictions. Because
+\seed{rra}{RRA} files are rather large-ish, the samples
+are encoded using flac. These flac samples will need to
+be converted to {\sc RRA} before \songlib\ can use them. The
+basic strategy for unpacking samples is to download
+a sample pack to a convenient directory and then (this
+is for illustration only; there is a more convenient
+method further down):
+
+\begin{verbatim}
+    cd convenientDirectory
+    tar xvzf instrument-basename.tgz
+    ./install
+\end{verbatim}
+
+Of course, {\it convenientDirectory} and {\it instrument-basename} are
+to be replaced with the appropriate names. Also, you will need to
+install {\it flac} utility:
+
+\begin{verbatim}
+   sudo apt-get install flac
+\end{verbatim}
+
+since the samples are stored as {\it flac} files ({\it flac} is a compressed,
+but lossless, audio format). The installation processes converts
+the {\it flac} files to {\it rra} format
+(hence the need for the {\it flac} utility).
+The converted rra note files are then
+stored in the {\tt /usr/local/share/samples/}
+hierarchy.
+
+The current set of samples in the repository can be found
+\xlink{here}{samples}.
+
+There is a Bash shell script, named {\it getpack}, that automates
+these tasks. For example, to install the {\it banjo-a.tgz} sample pack,
+run the command:
+
+\begin{verbatim}
+    getpack banjo-a
+\end{verbatim}
+    
+This will fetch, unpack, and install the instrument sample pack.
+Do this in a temporary directory as a bunch of files are left
+behind in the process.
+
+\section*{Making your own sample packs}
+
+The converse of {\it getpack} is {\it mkpack}. To make a sample pack,
+you start with a set of {\sc WAV} or {\sc RRA} files that are properly named.
+Here are three ways to properly name {\sc RRA} files that contain notes
+from octave 4, using a filename prefix of {\it soft\_}:
+
+\begin{center}
+\begin{tabular}{lll}%
+\T\toprule
+    {\it note-octave}     &   {\it octave-note}     &   {\it note number}     \\
+\T\midrule
+\verb!soft_c4.rra!    &   \verb!soft_4c.rra!   &   \verb!soft_48.rra!   \\
+\verb!soft_c#4.rra!   &   \verb!soft_4c\#.rra! &   \verb!soft_49.rra!   \\
+\verb!soft_db4.rra!   &   \verb!soft_4db.rra!  &   \verb!soft_49.rra!   \\
+\verb!soft_d4.rra!    &   \verb!soft_4d.rra!   &   \verb!soft_50.rra!   \\
+\verb!soft_d#4.rra!   &   \verb!soft_4d\#.rra! &   \verb!soft_51.rra!   \\
+\verb!soft_eb4.rra!   &   \verb!soft_4eb.rra!  &   \verb!soft_51.rra!   \\
+\verb!soft_e4.rra!    &   \verb!soft_4e.rra!   &   \verb!soft_52.rra!   \\
+\verb!soft_f4.rra!    &   \verb!soft_4f.rra!   &   \verb!soft_53.rra!   \\
+\verb!soft_f#4.rra!   &   \verb!soft_4f\#.rra! &   \verb!soft_54.rra!   \\
+\verb!soft_gb4.rra!   &   \verb!soft_4gb.rra!  &   \verb!soft_54.rra!   \\
+\verb!soft_g4.rra!    &   \verb!soft_4g.rra!   &   \verb!soft_55.rra!   \\
+\verb!soft_g#4.rra!   &   \verb!soft_4g\#.rra! &   \verb!soft_56.rra!   \\
+\verb!soft_ab4.rra!   &   \verb!soft_4ab.rra!  &   \verb!soft_56.rra!   \\
+\verb!soft_a4.rra!    &   \verb!soft_4a.rra!   &   \verb!soft_57.rra!   \\
+\verb!soft_a#4.rra!   &   \verb!soft_4a\#.rra! &   \verb!soft_58.rra!   \\
+\verb!soft_bb4.rra!   &   \verb!soft_4bb.rra!  &   \verb!soft_58.rra!   \\
+\verb!soft_b4.rra!    &   \verb!soft_4b.rra!   &   \verb!soft_59.rra!   \\
+\T\bottomrule
+\end{tabular}
+\end{center}
+
+The last column uses absolute note numbers. The lowest absolute note number
+is zero which corresponds to a C in octave 0. The C note in octave one
+has a note number of 12, since there are 12 notes in an octave and \songlib\
+uses zero-based counting.
+
+Let's suppose I have a set of tinwhistle notes, stored as properly named
+{\sc WAV} files, where the {\sc WAV} files start with the prefix {\it soft\_}.
+For example, one of the files might be named:
+
+\begin{verbatim}
+    soft_f#5.wav
+\end{verbatim}
+
+Suppose further, I wish to create a sample pack named {\it tinwhistle-soft}.
+I would run this command:
+
+\begin{verbatim}
+    mkpack tinwhistle soft soft_*.wav
+\end{verbatim}
+
+The first two arguments to {\it mkpack} will be used to construct the sample
+pack name.
+
+The {\it mkpack} program will then perform the following steps:
+
+\begin{enumerate}
+\item
+        convert the {\sc WAV} files to {\sc RRA}
+\item
+        fade in and fade out the {\sc RRA} amplitudes so that the
+        amplitude values both start and end with a zero
+\item
+        normalize the amplitudes so that all notes have the same volume
+\item
+        convert the sample notes to FLAC format, which is a lossless, but
+        compressed
+\end{enumerate}
+
+If {\sc RRA} files are passed to {\it mkpack} instead of {\sc WAV}s, the first step is ommitted.
+
+Next, the FLAC files and an install script are tarred up
+into a tarball.
+Finally, the tarball is then shipped to the \songlib\ server.
+If the notes are already in {\sc RRA} format, then the command would be
+something like:
+
+\begin{verbatim}
+    mkpack tinwhistle soft soft_*.rra
+\end{verbatim}
+
+The fading and normalizing steps will still be performed.
+Note: the second argument to {\it mkpack} (in the example, {\it soft})
+does not have to match the prefix of the {\sc WAV} or {\sc RRA} files.
+
+For every sample pack,
+you should have a file named \verb!<prefix>.README!, where
+\verb!<prefix>! is the prefix of your notes (like {\it soft}), that gives
+the provenance of the notes in the sample pack. You may
+also have a file named \verb!<prefix>.include!
+that can be used to simplify the use of your sample pack. Such
+an include file might load the sample pack into a predefined
+variable, as in:
+
+\begin{verbatim}
+    instrument = readScale("/usr/local/share/samples/tinwhistle","soft_");
+\end{verbatim}
+
+or for a set of drum kit samples:
+
+\begin{verbatim}
+    setCrash(readScale("/usr/local/share/samples/beatbox/","dpe-crash_"));
+    setHHOpen(readScale("/usr/local/share/samples/beatbox/","dpe-hhopen_"));
+    setHHClosed(readScale("/usr/local/share/samples/beatbox/","dpe-hhclosed_"));
+    setHHPedal(readScale("/usr/local/share/samples/beatbox/","dpe-hhpedal_"));
+    setSnare(readScale("/usr/local/share/samples/beatbox/","dpe-snare_"));
+    setTomHi(readScale("/usr/local/share/samples/beatbox/","dpe-tomhi_"));
+    setTom(readScale("/usr/local/share/samples/beatbox/","dpe-tom_"));
+    setTomLo(readScale("/usr/local/share/samples/beatbox/","dpe-tomlo_"));
+    setKick(readScale("/usr/local/share/samples/beatbox/","dpe-kick_"));
+    setRim(readScale("/usr/local/share/samples/beatbox/","dpe-rim_"));
+    setStick(readScale("/usr/local/share/samples/beatbox/","dpe-stick_"));
+\end{verbatim}
+
+
+If you don't have an account on the \songlib\ server, this last step will fail.
+In this case, you can mail the sample pack to the email address at the
+bottom of this document.
+
+\end{document}

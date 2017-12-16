@@ -1,0 +1,155 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{songlib: note notations}
+
+\title{Songlib: note notations\\
+\date{Revision Date: \today}}
+
+\author{written by: Song Li Buser}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{template.pdf}}
+\W\htmlrule
+
+Songlib nominally uses a Western music scale with 12 notes (or semitones)
+per octave. The following note constants are defined:
+
+\begin{verbatim}
+    #define C     0
+    #define Cs    1
+    #define Db    1
+    #define D     2
+    #define Ds    3
+    #define Eb    3
+    #define E     4
+    #define F     5
+    #define Fs    6
+    #define Gb    6
+    #define G     7
+    #define Gs    8
+    #define Ab    8
+    #define A     9
+    #define As   10
+    #define Bb   10
+    #define B    11
+\end{verbatim}
+
+Here, the ''s'' appelation denotes a sharp and ''b'' a flat.
+These constants are used in conjuction with an octave specification
+to specify which notes \see{play}, \see{chord}, and others
+are to produce.
+
+There are also ~~absolute~~ constants defined as well:
+
+\begin{verbatim}
+    #define C0    0
+    #define Cs0   1
+    #define Db0   2
+    #define D0    2
+    ...
+    #define B0   11
+    #define C1   12
+    #define Cs1  13
+    #define Db1  13
+    #define D1   14
+    ...
+    ...
+    ...
+    #define B10  131
+\end{verbatim}
+
+These constants are
+used with the
+\seed{nplay}{notePlaying} and \seed{getNumberedNote}{filters}
+commands,
+among others.
+
+\section{Percussion}
+
+A special set of note constants is used for playing
+percussion. By songlib covention, the following notes
+correspond to the following percussion instruments:
+
+
+\begin{tabular}{cll}
+~~note suffix~~ & named constant~~~ & explanation\\
+3 & BLOCK\_LOW & wood block, low\\
+6 & BLOCK\_MIDDLE & wood block, middle\\
+9 & BLOCK\_HIGH & wood block, high\\
+12 & BASS\_LOW & bass drum, low\\
+15 & BASS\_MIDDLE & bass drum, middle\\
+18 & BASS\_HIGH & bass drum, high\\
+21 & CLAP & hand clap\\
+24 & COWBELL & cowbell\\
+27 & CRASH & crash cymbal\\
+30 & CRASH\_ALT & crash cymbal, alternate\\
+33 & HAT\_CLOSED & high hat, closed\\
+36 & HAT\_OPEN & high hat, open\\
+39 & HAT\_PEDAL & high hat, pedal\\
+42 & KICK & pedal drum\\
+45 & KICK\_ALT & pedal drum, alternate\\
+48 & RIDE\_ & ride cymbal\\
+51 & RIDE\_ALT & ride cymbal, alternate\\
+54 & RIDE\_BELL & ride cymbal, bell\\
+57 & SNARE & snare drum\\
+60 & SNARE\_ALT & snare drum, alternate\\
+63 & STICK & stick on rim\\
+66 & STICKS & stick on stick\\
+69 & TIM\_LOW & timbale, low\\
+72 & TIM\_MIDDLE & timbale, middle\\
+75 & TIM\_HIGH & timbale, high\\
+78 & TOM\_LOW & tomtom, low\\
+81 & TOM\_MIDDLE & tomtom, middle\\
+84 & TOM\_HIGH & tomtom, high\\
+87 & CRASH\_CHOKE & short crash\\
+90 & BELL & bell\\
+93 & CHINA & china cymbal\\
+96 & SPLASH & splash cymbal\\
+99 & TAMBOURINE & tambourine\\
+102 & SHAKER & shaker\\
+105 & RIMSHOT & rim shot\\
+108 & PERC8 & percussion\\
+111 & PERC9 & percussion\\
+114 & PERC10 & percussion\\
+117 & PERC11 & percussion\\
+120 & PERC12 & percussion\\
+123 & PERC13 & percussion\\
+126 & PERC14 & percussion\\
+129 & PERC15 & percussion\\
+\end{tabular}
+
+Assuming the notes have been set up properly, one would
+use these constants thusly:
+
+\begin{verbatim}
+    drumset = readScale("/usr/local/share/samples/drums/","hydrogen_");
+
+    snplay(Q,drumset,COWBELL);
+    snplay(I,drumset,CRASH);
+\end{verbatim}
+
+Drums are usually played with the {\it snplay} playing function, since
+the entire note will play but the song will advance only the
+requested number of beats. There is a version of {\it snplay} that
+randomly introduces some slop into the amplitude, pitch and
+timing of the note:
+
+\begin{verbatim}
+    for (i = 0; i < 4; ++i)
+	drum(I,drumset,TOM_MIDDLE)
+\end{verbatim}
+
+This makes a repetitive series of beats sound less mechanical.
+You can set the slop with the functions:
+
+\begin{verbatim}
+    void setSlopTiming(double);
+    void setSlopAmplitude(double);
+    void setSlopPitch(double);
+\end{verbatim}
+
+\end{document}

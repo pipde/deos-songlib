@@ -1,0 +1,173 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{Songlib: keeping time}
+
+\title{Songlib: keepingTime\\
+\date{Revision Date: \today}}
+
+\author{written by: Song Li Buser}
+
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{template.pdf}}
+\W\htmlrule
+
+\section*{Time signatures in \songlib}
+
+\Songlib supports simple time signatures via the functions:
+
+\begin{verbatim}
+    void setTempo(int beatsPerMinute);
+    void setTime(int beatsPerMeasure,int noteValue);
+\end{verbatim}
+
+Setting the tempo fixes how long a single beat lasts. The default
+value is 132 beats per minute. Setting the beats per minute to a
+lower value slows down the resulting output. Setting the beats
+per minute to a higher value speeds up the output.
+
+The {\it setTime} function is used to modify the time signature of
+the song. The first argument,
+{\it beatsPerMinute}, is used for counting measures (see below),
+while the second argument, {\it noteValue}, in conjunction with
+the beats per minute, determines the how long a particular note
+will last. \Songlib defines the the
+following note length variables:
+
+\begin{verbatim}
+    T     a thirty-secondth note
+    S     a sixteenth note
+    I     an eighth note (can't use E - it a key signature constant)
+    Q     a quarter note
+    H     a half note
+    W     a whole note
+\end{verbatim}
+
+Valid second arguments to {\it setTime} are powers of 2. By taking
+the reciprocal of
+the second argument, one can determine which note length is equivalent
+to a single beat. For example, if the second argument is 4,
+then a quarter note lasts a single beat. If the second argument
+is 8, then an eighth note lasts a single beat.
+
+Here is an example,
+
+\begin{verbatim}
+    setTempo(80);
+    setTime(4,4);
+    play(H,instrument,3,C);
+\end{verbatim}
+
+Since the tempo is set to 80 beats per minute, one beat lasts
+0.75 seconds. Since the time signature is 4:4, a quarter note
+gets a single beat. The C note is then played for a half
+note (which is twice the length of a quarter note) or
+1.5 seconds.
+
+The above code is equivalent to...
+
+\begin{verbatim}
+    play(1,instrument,3,C);
+\end{verbatim}
+
+...since a quarter note gets one beat according to the time signature.
+
+The algorithm for setting the note length variables is:
+
+\begin{verbatim}
+    T  = noteValue / 32.0;
+    S  = T * 2.0;
+    I  = S * 2.0;
+    Q  = I * 2.0;
+    H  = Q * 2.0;
+    W  = H * 2.0;
+
+    //dotted notes
+    Sd = S * 1.5;
+    Id = I * 1.5;
+    Qd = Q * 1.5;
+    Hd = H * 1.5;
+    Wd = W * 1.5;
+
+    //triplet notes       //downbeat notes       //upbeat notes
+    Tt = S / 3.0;         TD = 4 * T / 3.0;      TU = 2 * T / 3.0;
+    St = I / 3.0;         SD = 4 * S / 3.0;      SU = 2 * S / 3.0;
+    It = Q / 3.0;         ID = 4 * I / 3.0;      IU = 2 * I / 3.0;
+    Qt = H / 3.0;         QD = 4 * Q / 3.0;      QU = 2 * Q / 3.0;
+    Ht = W / 3.0;         HD = 4 * H / 3.0;      HU = 2 * H / 3.0;
+    Wt = 2 * W / 3.0;     WD = 4 * W / 3.0;      WU = 2 * W / 3.0;
+\end{verbatim}
+
+Note that there are dotted versions 
+(triplets,, downbeats, and upbeats too) of the common note lengths.
+For example, the note length
+{\tt Wd} is a dotted whole note (which is
+equivalent to W + H),
+while {\tt Wt} is a triplet
+whole note (which is equivalent to W / 3).
+
+One should always use the symbolic note lengths (W, H, Q, etc.)
+instead of absolute numbers. Otherwise, adjusting the
+tempo or time signature will have no affect on those
+notes.
+
+\section*{Counting measures}
+
+Knowing how many measures a passage of a song
+takes is extremely useful in aligning harmonic
+and percussive tracks.
+The first argument to {\it setTime} sets how
+many beats are in a measure.
+Given a time signature (the default time signature is 4:4),
+one can count measures with the {\it measure} function:
+
+\begin{verbatim}
+    void measure(char *file,char *function,int lineNumber);
+\end{verbatim}
+
+The {\it measure} function (with a non-zero file argument) prints
+out the number of measures
+elapsed since the last call to {\it measure} (with a zero as a file
+argument) as well as the total number of measures
+elapsed since the beginning of the song. To simplify the use of
+{\it measure}, two macros are defined. A typical usage of these macros
+are:
+
+\begin{verbatim}
+    static void
+    verse ()
+        {
+        startMeasure();
+        play(Hd,harp,4,Cs)
+        play(Q,harp,4,Ds)
+        play(H,harp,4,Cs)
+        play(H,harp,4,Ds)
+        checkMeasure();
+        play(W,harp,4,Cs)
+        play(W,harp,4,F)
+        checkMeasure();
+        }
+\end{verbatim}
+
+The calls to {\it checkMeasure} print out information like:
+
+\begin{verbatim}
+    high.c: verse:   77: 2.000000 measures (34.000000 total)
+    high.c: verse:   93: 2.000000 measures (36.000000 total)
+\end{verbatim}
+
+The definitions of {\it startMeasure} and {\it checkMeasure} are:
+
+\begin{verbatim}
+    #define startMeasure() measure(0,0,0)
+    #define checkMeasure() measure(__FILE__,__FUNCTION__,__LINE__)
+\end{verbatim}
+
+You should use {\it startMeasure} (and {\it checkMeasure}) at the beginning
+(and end) of every unit (verse,refrain,bridge).
+
+\end{document}

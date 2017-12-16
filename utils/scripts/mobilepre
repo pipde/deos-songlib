@@ -1,0 +1,5 @@
+amixer -c1 sset Speaker,0 on
+amixer -c1 sset Speaker,0 playback 25
+amixer -c1 sset PCM playpack 25
+amixer -c1 sset PCM capture 25
+amixer -c1 sset PCM cap

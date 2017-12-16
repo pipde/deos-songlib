@@ -1,0 +1,125 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{Songlib: Hosa Tracklink recording}
+
+\title{Songlib: tracklink\\
+\date{Revision Date: \today}}
+
+\author{written by: Song Li Buser}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{hosa.pdf}}
+\W\htmlrule
+
+\section*{Introduction}
+
+This tutorial assumes Ubuntu Linux running the ALSA Sound Server,
+although this should work for other versions of Linux and
+other sound servers, with appropriate modifications.
+
+You should have a shell script named {\it record}
+that uses the alsa audio driver.
+You will also need to install {\it ecasound} and {\it sox}:
+
+\begin{verbatim}
+    sudo apt-get install ecasound sox
+\end{verbatim}
+
+\begin{description}
+
+\item[Step 1]
+
+Using the Hosa Tracklink USB cable, connect your microphone
+to your laptop.  If you run the following command:
+
+\begin{verbatim}
+    record
+\end{verbatim}
+
+without any arguments, you should see a message similar to:
+
+\begin{verbatim}
+    you must specify a sound card number!
+     0 [PCH            ]: HDA-Intel - HDA Intel PCH
+                          HDA Intel PCH at 0xe3d40000 irq 44
+     1 [Interface      ]: USB-Audio - Tracklink USB Interface
+                          Hosa Technology, Inc. Tracklink USB Interface at ...
+        \end{verbatim}
+
+Card 0 is your internal sound card while card 1
+should be the Hosa Tracklink.
+
+\item[Step 2]
+
+Turn the volume button on the Hosa Tracklink all the way up (clockwise).
+This control is on the top of the small brick in the middle of the 
+cable.
+The Tracklink supports both condensor and dynamic mics.
+For condensor mics, turn on the phantom power; the phantom power
+switch is on the side of the brick. If the phantom power is on,
+the 48V LED will light up.
+
+\item[Step 3]
+
+Now you need to set the levels. In one terminal window, run the command:
+
+\begin{verbatim}
+    alsamixer -c 1
+\end{verbatim}
+
+In another window, run the command:
+
+\begin{verbatim}
+    monitor 1
+\end{verbatim}
+
+Plug in some good headphones into your computer and then
+speak into the mic. You should hear your voice through the headphones,
+with a slight delay.
+Using {\it alsamixer},
+make sure your master, pcm, and headphones are near 100\%.
+Now you want to adjust the volume control on the Tracklink
+until you have the loudest result in your headphones WITHOUT any
+annoying buzz or hiss.
+Note that only one side of your head phones
+will change during this volume adjustment since the mic is monophonic.
+Stop monitoring in the monitoring window with a \verb!<Ctl>-c!.
+
+\item[Step 4]
+
+To record, enter the command:
+
+\begin{verbatim}
+    record 1
+\end{verbatim}
+
+At the {\it ecasound} prompt, press \verb!t! to start recording, \verb!s! to
+stop recording, and \verb!q! to quit.
+Note that if you want to record with the built-in
+device, you would enter the command:
+
+\begin{verbatim}
+    record 0
+\end{verbatim}
+
+After recording,
+play the file {\it track.wav} back through the laptop speakers
+to make sure you have recorded properly:
+
+\begin{verbatim}
+    play track.wav
+\end{verbatim}
+
+If you experience clipping, reduce the loudness of your voice or
+reduce the volume control on the Tracklink.
+If you want to save the recording, save {\it track.wav}
+under another name, since subsequent recordings will
+overwrite {\it track.wav}.
+
+\end{description}
+
+\end{document}

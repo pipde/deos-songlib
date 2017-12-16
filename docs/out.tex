@@ -1,0 +1,72 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{songlib: note playing}
+
+\title{Songlib: note playing\\
+\date{Revision Date: \today}}
+
+\author{John C. Lusth}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{notePlaying.pdf}}
+\W\htmlrule
+
+The major note playing functions/families are:
+
+\begin{itemize}
+\item
+    \xlink{play}{play.html}
+\item
+    \xlink{chord}{chord.html}
+\item
+    \xlink{bend}{bend.html}
+\item
+    \xlink{trill}{trill.html}
+\item
+    \xlink{draw/resolve}{draw.html}
+\item
+    \xlink{silence}{silence.html}
+\end{itemize}
+
+Most functions have alternative forms. For example, the main note playing
+function is {\it play}, but there are the following alternative forms:
+{\it nplay}, {\it rplay}, and {\it dplay}.
+
+The 'n' version of a function means the note is specified by a numbered
+note rather than an octave/pitch pair. For example, these calls are
+all equivalent:
+
+\begin{verbatim}
+play(Hd,guitar,3,C);
+nplay(Hd,guitar,C3);
+play(Hd,guitar,C3 / NOTES,C3 % NOTES);
+nplay(HD,guitar,3 * NOTES + C);
+\end{verbatim}
+
+The 'r' version of a function indicates that an RRA object is passed
+rather than an octave/pitch specification. These three calls are
+equivalent:
+
+\begin{verbatim}
+play(Hd,guitar,3,C);
+rplay(Hd,getNote(guitar,3,C));
+rplay(Hd,getNumberedNote(guitar,C3));
+\end{verbatim}
+
+The 'd' version of a function indicates that raw amplitude data is passed
+as an integer array and a length. The following calls to play and dplay
+are equivalent:
+
+\begin{verbatim}
+RRA *r = getNote(guitar,3,C);
+play(Hd,guitar,3,C);
+dplay(Hd,r->data[0],r->samples);
+\end{verbatim}
+
+See also: \textcolor{red}{\xlink{noteNotations}{noteNotations.html}},\textcolor{red}{\xlink{rra}{rra.html}}
+
+\end{document}

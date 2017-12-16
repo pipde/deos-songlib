@@ -1,0 +1,12 @@
+#!/bin/bash
+
+for s in "$@"
+    do
+    chmod 644 "$s"
+    name=`basename "$s" .mp3`
+    dir=`dirname "$s"`
+    echo converting "$s" to RRA
+    lame --decode "$s" - > .mp32flac.wav
+    sox .mp32flac.wav "$dir"/"$name".flac
+    rm -r .mp32flac.wav
+    done

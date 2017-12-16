@@ -1,0 +1,4 @@
+#!/bin/bash
+echo This program is restricted to educational use only.
+echo Getting $1...
+youtube-dl -k $1

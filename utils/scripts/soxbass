@@ -1,0 +1,4 @@
+#!/bin/bash
+effect=bass
+options=3
+soxfilter -e $effect -o "$options" $*

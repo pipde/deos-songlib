@@ -1,0 +1,199 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{Songlib: post-processing filters}
+
+\title{Songlib: post-processing filters\\
+\date{Revision Date: \today}}
+
+\author{written by: Song Li Buser}
+
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{post.pdf}}
+\W\htmlrule
+
+\section*{Post-processing}
+
+Once an audio file is created with the \songlib\ library, you can enhance
+the audio via post-processing. The \songlib\ package comes with a number of
+post-processing filters, some of which work natively with RRA files and
+some use {\it sox}.
+The {\it sox}-based filters can take RRA files as input, but convert
+them to WAV before {\it sox} processes them.
+
+\section*{RRA-based filters}
+
+Most RRA filters accept zero, one, or two file names, plus options. If
+given no file names, they read from {\it stdin} and write to {\it stdout}. If
+given one filename, they read from the given file and write to {\it stdout}.
+If given two filenames, they read from the first and write to the second.
+Filters marked {\it ABNORMAL} do not follow this pattern.
+
+\subsection*{Format filters}
+
+\begin{description}
+\item[rra2mp3,rra2ogg,rra2flac]
+batch convert RRA files to MP3, OGG, or FLAC --
+this filter requires one or more command-line arguments, all
+of which are the names of the RRA files to be converted;
+it produces similarly named files with 
+\verb!.mp3!, \verb!.ogg!, or \verb!.flac! extensions,
+rather than with \verb!.rra! extensions -- {\it ABNORMAL}
+\item[flac2rra,flac2mp3,flac2ogg]
+batch convert FLAC files to RRA, MP3, or OGG --
+this filter requires one or more command-line arguments, all
+of which are the names of the FLAC files to be converted;
+it produces similarly named files with
+\verb!.rra!, \verb!.mp3!, or \verb!.ogg! extensions,
+rather than with \verb!.flac! extensions -- {\it ABNORMAL}
+\item[ogg2rra,ogg2mp3,ogg2flac]
+batch convert OGG files to RRA, MP3, or FLAC --
+this filter requires one or more command-line arguments, all
+of which are the names of the OGG files to be converted;
+it produces similarly named files with
+\verb!.rra!, \verb!.mp3!, or \verb!.flac! extensions,
+rather than with \verb!.ogg! extensions -- {\it ABNORMAL}
+\item[mp32rra,mp32ogg,mp32flac]
+batch convert MP3 files to RRA, OGG, or FLAC --
+this filter requires one or more command-line arguments, all
+of which are the names of the MP3 files to be converted;
+it produces similarly named files with
+\verb!.rra!, \verb!.ogg!, or \verb!.flac! extensions,
+rather than with \verb!.mp3! extensions -- {\it ABNORMAL}
+\item[rra2wav,wav2rra]
+convert from RRA to WAV and vice versa
+\end{description}
+
+\subsection*{Effects filters}
+
+Typically, effects filters are strung together in a pipeline:
+
+\begin{verbatim}
+   cat track1.rra | rraamplify -a 0.8 | rrachorus | rrareverb | rrastereo -r > final1.rra
+\end{verbatim}
+
+To see the options that a filter handles, use the \verb!-h! option, as in:
+
+\begin{verbatim}
+    rraecho -h
+\end{verbatim}
+
+\begin{description}
+\item[rraamplify]
+increase or decrease the volume
+\item[rrachorus]
+add multiple voices to the incoming audio, some pitched a little bit higher 
+and some pitched a little bit lower
+\item[rraecho]
+add a prominent echo to the incoming audio -- unlike {\it soxecho} (below),
+which adds a single echo,
+{\it rraecho} re-echos repeatedly,
+each subsequent echo fainter than the previous
+\item[rrafader]
+fade in and fade out the incoming audio
+\item[rrafastmixer]
+mix a number of audio files, given as command line arguments, into a single
+audio file -- the output audio is assumed to be the last filename given as
+an argument -- if the last argument is \verb!-!, then the output audio is sent
+to stdout.
+\item[rraflanger]
+add a flanging effect to the incoming audio
+\item[rrahiss]
+add a hiss to the incoming audio
+\item[rramono]
+convert a multichannel audio to a single channel -- a single channel from
+the input can be selected or all channels in the input can be merged into
+a single channel
+\item[rrareverb] add some reverb to the incoming audio --
+like {\it rraecho}, but the echo is delayed much less
+\end{description}
+
+\section*{Mastering filters}
+
+These filters are useful for mastering vocals or instrumentals:
+
+\begin{description}
+\item[rraskip]
+remove the first part of a song so you can focus on later portions
+\item[rrasilence]
+reduces the volume on regions that appear to
+be silent - it is mainly used to remove
+recording hiss and background noises from vocals --
+try the default parameters and
+adjust if to much or too little signal is being removed
+\end{description}
+
+\section*{Sox-based filters}
+
+The {\it sox}-based filters take zero, one, or two command-line arguments. 
+If no arguments are given, then the filter expects the input audio to 
+come from stdin and the output audio to go to stdout. The default is to
+expect a WAV as input and produces a WAV on output:
+
+\begin{verbatim}
+    cat song.wav | soxecho > songecho.wav
+\end{verbatim}
+
+This example uses the {\it soxecho} filter, but the behavior is the same for
+all {\it sox}-based filters.
+If the \verb!-r! option is given, then the input on stdin is RRA:
+
+\begin{verbatim}
+    cat song.rra | soxecho -r > songecho.wav
+\end{verbatim}
+
+If the \verb!-R! option is given, then an RRA is produced on stdout:
+
+\begin{verbatim}
+    cat song.wav | soxecho -R > songecho.rra
+    cat song.rra | soxecho -r -R > songecho.rra
+\end{verbatim}
+
+When one command-line argument is given, it is assumed to be the name
+of the audio input file. Sox determines whether it is a WAV or RRA file
+by its extension. When two command-line arguments are given, the first
+is assumed to be the name of the audio input file and the output is written
+to a file named by the second command-line argument. Thus, the following
+three commands are equivalent:
+
+\begin{verbatim}
+    cat song.rra | soxecho -r -R > songecho.rra
+    soxecho -R song.rra > songecho.rra
+    soxecho song.rra songecho.rra
+\end{verbatim}
+
+Finally, there is the generic {\it soxfilter}, which takes a \verb!-e!
+option to
+specify the effect and a \verb!-o! option to pass options to the effect.
+For example,
+the {\it soxecho} filter devolves to the following call to {\it soxfilter}:
+
+\begin{verbatim}
+    soxfilter -e echo -o 0.8 0.9 1000.0 0.3
+\end{verbatim}
+
+\begin{description}
+\item[soxecho]
+add a prominent echo to the incoming audio
+\item[soxchorus]
+add multiple voices to the incoming audio, some pitched a little bit higher 
+and some pitched a little bit lower
+\item[soxreverb]
+add some reverb to the incoming audio -- like {\it soxecho}, but the echo is delayed
+much less
+\item[soxflanger]
+add a flanging effect to the incoming audio
+\item[soxbass]
+boost the bass of the incoming audio
+\item[soxtelephone]
+add a telephone effect to the incoming audio -- the low bass and the high treble
+are removed to make the audio sound like it is coming over a telephone
+\item[soxfilter]
+the generic filter on which the above filters are based
+\end{description}
+
+\end{document}

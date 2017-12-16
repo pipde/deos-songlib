@@ -1,0 +1,11 @@
+#!/bin/bash
+for s in "$@"
+    do
+    chmod 644 "$s"
+    name=`basename "$s" .flac`
+    dir=`dirname "$s"`
+    echo converting "$s" to RRA
+    flac -s -f -d -c "$s" > .wav
+    wav2rra .wav > "$dir"/"$name".rra
+    rm .wav
+    done

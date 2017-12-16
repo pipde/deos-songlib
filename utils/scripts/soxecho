@@ -1,0 +1,4 @@
+#!/bin/bash
+effect=echo
+options="0.8 0.9 1000.0 0.3"
+soxfilter -e $effect -o "$options" $*

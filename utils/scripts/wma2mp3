@@ -1,0 +1,10 @@
+#!/bin/bash
+for i in "$@" 
+    do
+    echo $i
+    name=`basename "$i" .wma`
+    dir=`dirname "$s"`
+    mplayer -vo null -vc dummy -af resample=44100 -ao pcm:waveheader "$i" 
+    lame -m s audiodump.wav -o "$dir"/"$name".mp3
+    done
+rm -f audiodump.wav

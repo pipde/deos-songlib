@@ -1,0 +1,61 @@
+songlib (1.16)
+
+  * added adraw, deleted fdraw, and modified the params of draw and ndraw
+
+songlib (1.15g)
+
+  * made rplay able to play raw (no header) data
+
+songlib (1.15d)
+
+  * added a bunch of sox-based filters (until decent rra filters are written)
+
+songlib (1.15c)
+
+  * fixed misnamed drumkit function in drums.h
+
+songlib (1.15b)
+
+  * fixed bug in readRRA for non-mono files
+  * added rraecho filter
+
+songlib (1.15a)
+
+  * added rramaster and warnings for clipping in rramfastmixer and rrastereo
+
+songlib (1.12)
+
+  * fixed bug in drum library due to inconsistent rename of getDrumNote
+
+songlib (1.11)
+
+  * added roll, flam, drag, and ghost drumming functions
+  * added drumPat and various drumKit functions
+
+songlib (1.10)
+
+  * allow negative offsets for the modal function n
+
+songlib (1.09)
+
+  * updated the modal chord system
+  
+songlib (1.01)
+
+  * changed dependency on libasound to libasound2
+
+songlib (1.00)
+
+  * first release
+
+songlib (0.99.1-1)
+
+  *  second songlib pre-release
+  *  fixed bug with readScale and multiple instruments
+  *  added getAttributeRRA and setAttributeRRA
+
+songlib (0.99.0-1)
+
+  *  initial songlib pre-release
+
+  -- John C. Lusth <lusth@cs.ua.edu>  2009-01-28 

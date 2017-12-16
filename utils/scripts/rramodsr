@@ -1,0 +1,8 @@
+for i in $*
+    do
+    base=`basename $i .rra`
+    rra2wav $i $base.wav
+    sox $base.wav -r 44100 out.wav
+    wav2rra out.wav $i
+    echo $i
+    done

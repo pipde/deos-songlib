@@ -1,0 +1,7 @@
+You need to install the guitar-electric-distorted01
+sample pack:
+
+     mkdir temp
+     cd temp
+     getpack guitar-electric-distorted01
+     rm *.rra

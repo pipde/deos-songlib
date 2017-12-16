@@ -1,0 +1,3123 @@
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+#include <assert.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include "songlib.h"
+#include <time.h>
+
+#define FADE_LIMIT 0.0001
+#define SUSTAIN_DEFAULT 0.999
+
+#define MIN(a,b) ((a) < (b)?(a) : (b))
+#define MAX(a,b) ((a) > (b)?(a) : (b))
+#define sign(x) ((x) < 0 ? -1 : 1)
+
+#define OUTPUT_LENGTH 100000
+#define NOTE_NAME_LENGTH 1024
+
+/* change LIBRARY_NAME and LIBRARY_VERSION appropriately */
+
+#define LIBRARY_NAME "songlib";
+#define LIBRARY_VERSION "1.05";
+
+static int ramp = LINEAR;
+
+static int sampleCounter = 0;
+static int beatsPerMeasure = 4;
+static int noteValue = 4;
+static double drawRamp = 0.20;
+
+double slopTiming = 0;
+double slopAmplitude = 0;
+double slopPitch = 0;
+
+double T = 0.125; //thirty-secondth note
+double S = 0.25;  //sixteenth note
+double I = 0.5;   //eighth note
+double Q = 1;     //quarter note
+double H = 2;     //half note
+double W = 4;     //whole note
+
+double Td = 0.125 * 1.5; //dotted thirty-secondth note
+double Sd = 0.25 * 1.5;  //dotted sixteenth note
+double Id = 0.5 * 1.5;   //dotted eighth note
+double Qd = 1 * 1.5;     //dotted quarter note
+double Hd = 2 * 1.5;     //dotted half note
+double Wd = 4 * 1.5;     //dotted whole note
+
+double Tt = 0.125 / 3.0; //triplet thirty-secondth note
+double St = 0.25 / 3.0;  //triplet sixteenth note
+double It = 0.5 / 3.0;   //triplet eighth note
+double Qt = 1 / 3.0;     //triplet quarter note
+double Ht = 2 / 3.0;     //triplet half note
+double Wt = 4 / 3.0;     //triplet whole note
+
+char *NoteNames[NOTES] =
+    {"c","c#","d","d#","e","f","f#","g","g#","a","a#","b",};
+char *NoteNAMES[NOTES] =
+    {"C","C#","D","D#","E","F","F#","G","G#","A","A#","B",};
+
+/***************** PRIVATE VARIABLES **********************/
+
+static double skip = 0;
+
+static char *outputName;
+static RRA *output;
+
+static int closed = 1;
+
+static double amplitude = 1.0;
+static int InstrumentCount = 0;
+static int randomChannelSelection = 0;
+
+static double beatsPerMinute = 132;
+static int bitsPerSample = 16;
+static int sampleRate = 44100;
+static double location = 0;
+static int sustainedLocation = 0;
+static int measuredLocation = 0;
+static int crescendoStart = -1;
+static double crescendoFactor = 1;
+static int maxLocation = 0;
+static int samplesWritten = 0;
+static double previousMeasures = 0;
+static double spaces = 0;
+static double sustain = SUSTAIN_DEFAULT;
+static double stride = 0;
+
+static double primaryEmphasis = 3;
+static double secondaryEmphasis = 1.75;
+
+/*************** PRIVATE METHOD SIGNATURES *****************/
+
+static void readClosestNote(int,int);
+static RRA *readNote(int,int);
+static int findClosestNote(int,int);
+static void ensureFadeIn(RRA *);
+static void growOutput(void);
+static int randChan();
+
+/************** PRIVATE DATA STRUCTURES ********************/
+
+static int originals[INSTRUMENTS][OCTAVES * NOTES];
+static RRA *filtered[INSTRUMENTS][OCTAVES * NOTES];
+static RRA *scale[INSTRUMENTS][OCTAVES * NOTES];
+
+static char *InstrumentDir[INSTRUMENTS];
+static char *InstrumentBase[INSTRUMENTS];
+static int pitchShift[INSTRUMENTS];
+static int filterCount[INSTRUMENTS];
+static filter_t filters[INSTRUMENTS][FILTERS];
+
+/********************Added new structure *******************/
+typedef struct commentRRA
+    {
+    double location;
+    char comment[512];
+    struct commentRRA *next;
+    }COMMENT;
+
+static COMMENT *commentBuffer;
+static COMMENT *tail = NULL;
+static COMMENT *head = NULL;
+
+/*****************************************************/
+/************** PUBLIC METHODS ***********************/
+/*****************************************************/
+
+/************* REQUIRED FUNCTIONS ********************/
+
+/* function songInit
+ *
+ * clears out originals so it is possible to tell whether a
+ * note has been read in or not.
+ *
+ * REQUIRED
+ *
+ * This needs to be changed to accept sampleRate and bitsPerSample
+ *
+ */
+
+void
+songInit()
+    {
+    memset(originals, 0, sizeof(originals));
+    memset(scale, 0, sizeof(scale));
+    memset(filtered, 0, sizeof(filtered));
+    }
+
+/* function openOutput
+ *
+ * this function creates the RRA object that notes will
+ * be played into - the function closeOutput will write
+ * all this data out
+ *
+ * REQUIRED
+ *
+ * This needs to be changed to remove sampleRate and bitsPerSample
+ *
+ */
+
+void
+openOutput(char *fn,int sr,int bps)
+    {
+    if (closed == 0)
+        Fatal("attempt to open output wave when "
+                "previous has not yet been closed\n");
+
+    if (sr > 0) sampleRate = sr;
+    if (bps > 0) bitsPerSample = bps;
+
+    printf("sampleRate is %d\n",sampleRate);
+    printf("bits per sample is %d\n",bitsPerSample);
+
+    outputName = fn;
+    output = newRRA(sampleRate,bitsPerSample,1,OUTPUT_LENGTH);
+
+    clearRRAData(output);
+
+    location = 0;
+    maxLocation = 0;
+
+    closed = 0;
+    }
+
+/*************** PUBLIC FUNCTIONS ********************/
+
+/* function readScale
+ *
+ * doesn't actually read the scale but sets up the structure
+ * for reading notes on an as-needed basis
+ *
+ */
+
+int
+readScale(char *dirName,char *baseName)
+    {
+    int inst = InstrumentCount;
+
+    ++InstrumentCount;
+
+    if (InstrumentCount >= INSTRUMENTS)
+        Fatal("readScale: too many instruments, the max is %d\n",INSTRUMENTS);
+
+    InstrumentDir[inst] = strdup(dirName);
+    InstrumentBase[inst] = strdup(baseName);
+
+    pitchShift[inst] = 0;
+
+    return inst;
+    }
+
+/************ BASIC NOTE PLAYING ROUTINES ************/
+
+/* function play
+ *
+ * the workhorse function of songlib - really a wrapper for dplay
+ *
+ */
+
+void
+play(double beats,int inst,int octave,int pitch)
+    {
+    dTrace("entering\n");
+
+    nplay(beats,inst,octave * NOTES + pitch);
+    }
+
+void
+splay(double beats,int inst,int octave,int pitch)
+    {
+    dTrace("entering\n");
+
+    snplay(beats,inst,octave * NOTES + pitch);
+    }
+
+void
+nplay(double beats,int inst,int offset)
+    {
+    RRA *h;
+    int channel;
+ 
+    dTrace("entering\n");
+
+    //h = getNumberedNote(inst,offset + pitchShift[inst]);
+    h = getNumberedNote(inst,offset);
+    channel = randChan() % h->channels;
+    dplay(beats,h->data[channel],h->samples,h->bitsPerSample);
+    }
+
+void
+snplay(double beats,int inst,int offset)
+    {
+    RRA *h;
+    double spot;
+    int channel;
+
+    dTrace("entering\n");
+
+    h = getNumberedNote(inst,offset);
+    channel = randChan() % h->channels;
+
+    spot = getLocation();
+    dplay(samplesToBeats(h->samples),h->data[channel],h->samples,h->bitsPerSample);
+    setLocation(spot + beats);
+    }
+
+/* function rplay
+ *
+ * an alternative form of play
+ *
+ */
+
+void
+rplay(double beats,RRA *h)
+    {
+    int channel;
+    channel = randChan() % h->channels;
+    dplay(beats,h->data[channel],h->samples,h->bitsPerSample);
+    }
+
+/* function dplay
+ *
+ * this function is the heart of songlib - it has two basic tasks:
+ *
+ * the first is to write the data from the given array to the
+ * output for the specified number of beats.
+ *
+ * the second is to fade out the note data to avoid discontinuites
+ * when the next note is played
+ *
+ */
+
+void
+dplay(double beats,int *data,int length, int bps)
+    {
+    static double beatSlop = 0.0;
+
+    double where;
+    double front;
+    double middle;
+
+    register double samples = beatsToSamples(beats);
+    register int noteSamples = (int) samples;
+    register int dataLen;
+    register int len;
+    register double diminishedAmplitude;
+    register int i;
+    register double fadeLimit;
+    register double bpsFactor;
+    double start;
+    double emphasis;
+
+    dTrace("entering\n");
+    //printf("playing note at %f\n",location - spaces);
+
+    where = samplesToMeasures(location - spaces);
+
+    front = (int) (where + 0.011);
+
+    if (beatsPerMeasure % 2 == 0)
+        middle = 0.5;
+    else
+        middle = (beatsPerMeasure + 1.0) / (2 * beatsPerMeasure);
+
+    //printf("where: %f, front: %f, middle: %f, front + middle: %f\n",
+        //where,front,middle,front+middle);
+    //getchar();
+
+    if (where > front - 0.01 && where < front + 0.01)
+        {
+        emphasis = primaryEmphasis;
+        printf("primary emphasis at measure %f\n",where);
+        }
+    else if (where > front + middle - 0.01 && where < front + middle + 0.01)
+        {
+        emphasis = secondaryEmphasis;
+        printf("secondary emphasis at measure %f\n",where);
+        }
+    else
+        {
+        emphasis = 1.0;
+        }
+
+    beatSlop += samples - noteSamples;
+    while (beatSlop > 1.0)
+        {
+        printf("dplay: adding extra sample\n");
+        ++noteSamples;
+        beatSlop -= 1.0;
+        }
+
+    bpsFactor = pow(2,bitsPerSample) / pow(2,bps);
+
+    len = MIN(length, noteSamples);
+    dataLen = length;
+
+    while (location + noteSamples >= output->samples)
+        growOutput();
+
+    /* write out all the data we have up to len (len <= noteSamples) */
+
+    for (i = 0; i < len; ++i)
+        {
+        output->data[0][(int)location] +=
+            data[i] * amplitude * bpsFactor * emphasis;
+        location += 1;
+        }
+
+    /* if we run out of data, replicate the last sample to make up */
+    /* the shortfall */
+    
+    if (len < noteSamples)
+        {
+        register const int lastSample = data[length-1] * amplitude * emphasis;
+
+        for (; i < noteSamples; ++i)
+            {
+            output->data[0][(int)location] += lastSample;
+            location += 1;
+            }
+        }
+
+    /* write out fade/sustained portion */
+
+    start = location;
+    diminishedAmplitude = amplitude * emphasis;
+    fadeLimit = FADE_LIMIT / MAX(crescendoFactor,1.0);
+
+    for (; i < dataLen && diminishedAmplitude > fadeLimit; ++i)
+        {
+        //added the next line (probably should compute the
+        //number of samples needed in advance)
+        if (location >= output->samples) growOutput();
+        output->data[0][(int)location] += 
+            data[i] * diminishedAmplitude * bpsFactor;
+        location += 1;
+        diminishedAmplitude *= sustain;
+        }
+
+    if (location > maxLocation) maxLocation = location;
+
+    sustainedLocation = location;
+    location = start;
+    //printf("ending note at %f\n",location - spaces);
+    //printf("    %f samples\n",samples);
+    }
+
+/* function setRandomChannel
+ *
+ * enables or disables random channel selection
+ * 0 - off
+ * 1 - on
+ *
+ */
+
+int
+setRandomChannel(int magicnumber)
+    {
+    int old = randomChannelSelection;
+    randomChannelSelection = magicnumber;
+    return old;
+    }
+
+/* function getRandomChannel
+ *
+ * returns the current random channel selection status
+ *
+ */
+
+int
+getRandoChannel()
+    {
+    return randomChannelSelection;
+    }
+
+/* function setRCSeed
+ *
+ * seeds the random number generator used in selecting which channel
+ * of data to read in notes that contain more than one version
+ *
+ */
+
+void
+setRCSeed(long seed)
+    {
+    srand((unsigned) seed);
+    }
+
+/* function randChan
+ *
+ * wrapper for rand() function used with random channel selection
+ *
+ */
+
+int 
+randChan()
+    {
+    if (randomChannelSelection == 0)
+        return 0;
+    else 
+        return rand();
+    }
+
+/* function drum
+ *
+ * play an absolute note, varying the amplitude, pitch, and timing,
+ * slightly
+ *
+ */
+
+void
+drum(double beats,int inst,int pitch)
+    {
+    double start;
+    double amp;
+
+    double tdelt = randomRange(0,slopTiming);
+    double pdelt = randomRange(0,slopPitch);
+    double adelt = randomRange(0,slopAmplitude);
+
+    start = getLocation();
+    amp = getAmplitude();
+
+    /* don't back up past the beginning */
+
+    if (start + tdelt < 0) tdelt = -start;
+
+    setLocation(start + tdelt);
+
+    setAmplitude(amp * (1 - slopAmplitude/2 + adelt));
+
+    fdraw(inst,pitch,1,pdelt,
+        samplesToBeats(getNumberedNote(inst,pitch)->samples));
+
+    /* restore settings */
+
+    setLocation(start + beats);
+    setAmplitude(amp);
+    }
+
+void
+ldrum(double beats,int inst,int pitch)
+    {
+    double old = getAmplitude();
+    
+    setAmplitude(old*2);
+    drum(beats,inst,pitch);
+    setAmplitude(old);
+    }
+
+void
+sdrum(double beats,int inst,int pitch)
+    {
+    double old = getAmplitude();
+    
+    setAmplitude(old/2);
+    drum(beats,inst,pitch);
+    setAmplitude(old);
+    }
+
+/* function chord
+ *
+ * play a set of notes simultaneously
+ *
+ * notes are given as octave/pitch pair plus offsets
+ *
+ */
+
+void
+chord(double beats,int inst,int octave,int pitch,...)
+    {
+    int offset;
+    int noteCount = 0;
+
+    dTrace("entering\n");;
+
+    va_list ap;
+
+    /* play the first note */
+
+    play(beats,inst,octave,pitch);
+
+    /* extract the arguments */
+
+    va_start(ap, pitch);
+
+    offset = va_arg(ap,int);
+    while (offset != 0)
+        {
+        if (offset < - OCTAVES * NOTES || offset >= OCTAVES * NOTES)
+            Fatal("chord: bad offset: %d (missing zero terminator?)\n",offset);
+
+        backwards(beats - stride);
+
+        play(beats,inst,octave,pitch+offset);
+
+        offset = va_arg(ap,int);
+
+        ++noteCount;
+        }
+
+    va_end(ap);
+
+    backwards(noteCount * stride);
+    }
+
+/* function nchord
+ *
+ * play a set of notes simultaneously
+ *
+ * notes are given as an absolute note plus offsets
+ *
+ */
+
+void
+nchord(double beats,int inst,int baseNote,...)
+    {
+    int offset;
+    int noteCount = 0;
+
+    dTrace("entering\n");;
+
+    va_list ap;
+
+    /* play the first note */
+
+    nplay(beats,inst,baseNote);
+
+    /* extract the arguments */
+
+    va_start(ap, baseNote);
+
+    offset = va_arg(ap,int);
+    while (offset != 0)
+        {
+        if (offset < - OCTAVES * NOTES || offset >= OCTAVES * NOTES)
+            Fatal("chord: bad offset: %d (missing zero terminator?)\n",offset);
+
+        backwards(beats - stride);
+
+        nplay(beats,inst,baseNote + offset);
+
+        offset = va_arg(ap,int);
+
+        ++noteCount;
+        }
+
+    va_end(ap);
+
+    backwards(noteCount * stride);
+    }
+
+
+/* function achord
+ *
+ * play a set of notes simultaneously
+ *
+ * notes are given as a base note octave and pitch and
+ * a set of pitch offsets stored in an array
+ *
+ */
+
+void
+achord(double beats,int inst,int octave,int pitch,
+        int *offsets,int length)
+    {
+    int i;
+
+    play(beats,inst,octave,pitch);
+
+    for (i = 0; i < length; ++i)
+        {
+        backwards(beats - stride);
+        nplay(beats,inst,octave * NOTES + pitch+offsets[i]);
+        }
+
+    backwards(length * stride);
+    }
+
+/* function anchord
+ *
+ * play a set of notes simultaneously
+ *
+ * notes are given as a base note octave and pitch and
+ * a set of pitch offsets stored in an array
+ *
+ */
+
+void
+anchord(double beats,int inst,int baseNote,int *offsets,int length)
+    {
+    int i;
+
+    nplay(beats,inst,baseNote);
+
+    for (i = 0; i < length; ++i)
+        {
+        backwards(beats - stride);
+        nplay(beats,inst,baseNote+offsets[i]);
+        }
+
+    backwards(length * stride);
+    }
+
+/* function rchord
+ *
+ * play a set of notes simultaneously
+ *
+ * notes are given as RRA objects
+ *
+ */
+
+void
+rchord(double beats,...)
+    {
+    int noteCount, channel;
+    RRA *note;
+    va_list ap;
+
+    /* extract the arguments */
+
+    va_start(ap, beats);
+
+    noteCount = 0;
+    note = va_arg(ap,RRA *);
+    while (note != 0)
+        {
+        if (noteCount > 0) backwards(beats-stride);
+
+        channel = randChan() % note->channels;
+        dplay(beats,note->data[channel],note->samples,note->bitsPerSample);
+
+        note = va_arg(ap,RRA *);
+
+        ++noteCount;
+        }
+
+    va_end(ap);
+
+    backwards((noteCount - 1) * stride);
+    }
+
+/* function dchord
+ *
+ * play a set of notes simultaneously
+ *
+ * notes are given as integer arrays and lengths
+ *
+ */
+
+void
+dchord(double beats,...)
+    {
+    int noteCount;
+    int *noteData;
+    int length;
+    va_list ap;
+
+    /* extract the arguments */
+
+    va_start(ap, beats);
+
+    noteCount = 0;
+    noteData = va_arg(ap,int *);
+    while (noteData != 0)
+        {
+        if (noteCount > 0) backwards(beats-stride);
+
+        length = va_arg(ap,int);
+
+        dplay(beats,noteData,length,bitsPerSample);
+
+        noteData = va_arg(ap,int *);
+
+        ++noteCount;
+        }
+
+    va_end(ap);
+
+    backwards((noteCount - 1) * stride);
+    }
+
+/* Easy Chords extension
+ *
+ * Will play variant of chord based on instrument it is
+ * used on.
+ *
+ * Currently has functions for guitar, mandolin, and banjo
+ * with major and minor chords for each.
+ *
+ * 0 is major type and 1 is minor type, this is easily 
+ * expanded or changed.
+ *
+ * usage:
+ * guitarChord(A,1,instrt,W) would play Am for W beats
+ * using the instrument defined as instr
+ */
+
+void
+guitarChord(int pitch,int type,int inst,double beats)
+    {
+    switch(pitch)
+        {
+        case A :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,1,A,7,12,16,19,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,1,A,7,12,15,19,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case B :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,1,B,7,12,16,19,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,1,Fs,5,8,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case C :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,1,C,4,7,12,17,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,1,G,5,8,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case D :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,1,D,7,12,16,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,1,D,7,12,15,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case E :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,1,E,7,12,16,19,24,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,1,E,7,12,15,19,24,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case F :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,1,F,4,7,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,1,F,3,7,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case G :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,1,G,4,7,12,16,24,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,1,D,8,12,17,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case Ab :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,1,Ab,4,7,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,1,Ab,3,7,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case Bb :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,1,F,5,9,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,1,F,5,8,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case Db :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,1,F,3,8,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,1,E,4,9,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case Eb :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,1,G,3,8,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,1,Gb,4,9,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case Gb :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,1,Gb,4,7,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,1,Gb,3,7,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        default :
+                printf("INPUT NOT RECOGNIZED\n");
+                break;
+        }
+    }
+
+void
+mandolinChord(int pitch,int type,int inst,double beats)
+    {
+    switch(pitch)
+        {
+        case A :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,A,7,16,24,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,A,7,15,24,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case B :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,B,7,16,24,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,B,3,12,19,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case C :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,G,9,15,21,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,G,8,15,21,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case D :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,A,5,12,21,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,A,5,12,20,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case E :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,Gs,8,15,24,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,G,9,15,23,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case F :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,C,5,9,17,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,Gs,9,16,24,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case G :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,G,7,16,24,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,G,7,15,24,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case Ab :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,Ab,7,16,24,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,Ab,7,15,24,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case Bb :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,Bb,4,12,19,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,Bb,7,15,24,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case Db :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,Gs,9,17,24,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,Gs,8,17,24,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case Eb :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,G,8,15,24,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,Bb,8,17,24,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case Gb :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,Bb,8,15,24,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,A,9,16,24,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        default :
+                printf("INPUT NOT RECOGNIZED\n");
+                break;
+        }
+    }
+
+void
+banjoChord(int pitch,int type,int inst,double beats)
+    {
+    switch(pitch)
+        {
+        case A :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,E,5,9,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,E,5,8,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case B :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,Gs,5,9,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,Gs,5,8,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case C :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,E,3,8,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,Ds,4,9,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case D :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,F,3,8,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,E,4,9,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case E :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,E,4,7,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,E,3,7,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case F :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,F,4,7,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,F,3,7,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case G :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,G,5,9,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,G,8,12,15,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case Ab :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,Ab,5,9,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,Ab,5,8,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case Bb :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,Bb,5,9,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,Bb,5,8,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case Db :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,Bb,3,8,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,Ab,5,10,13,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case Eb :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,Bb,3,8,12,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,B,4,9,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        case Gb :
+                switch(type)
+                {
+                case 0 :
+                        chord(beats,inst,2,Gs,7,10,15,0);
+                        break;
+                case 1 :
+                        chord(beats,inst,2,B,3,7,12,0);
+                        break;
+                default :
+                        printf("default case\n");
+                        break;
+                }
+                break;
+        default :
+                printf("INPUT NOT RECOGNIZED\n");
+                break;
+        }
+    }
+        
+
+
+        
+/******** MISCELLANEOUS NOTE PLAYING ROUTINES ********/
+
+/* function stick
+ *
+ * this routine plays a note a given number of times - it
+ * is intended for simply adding a simple one note instrument
+ * (like a stick)
+ *
+ * the note is not part of the scale and is read in directly
+ *
+ */
+
+void
+stick(double beats,int count,char *fileName)
+    {
+    int i, channel;
+    RRA *stick;
+    
+   stick = readRRA(OpenFile(fileName,"r"),0);
+
+    for (i = 0; i < count; ++i)
+        {
+        channel = randChan() % stick->channels;
+        dplay(beats,stick->data[channel],stick->samples,stick->bitsPerSample);
+        }
+
+    freeRRA(stick,0);
+    }
+
+/* function draw
+ *
+ * a note playing function which changes the pitch of a note
+ * while it's being played (i.e., the note is not restarted 
+ * upon subsequent pitch changes
+ *
+ * The given octave/pitch pair is the note to be resampled.
+ * The subsequent octave/pitch/beat triples are the
+ * notes to be played.
+ *
+ */
+
+void
+draw(int inst,int ooctave,int opitch,...)
+    {
+    int i;
+    int firstNote = 1;
+    int index,obaseNote;
+    int octave,pitch, channel;
+    RRA *note,*resampled;
+    double beats,totalBeats;
+    double factor,oldFactor,*factors;
+
+    dTrace("entering\n");;
+
+    obaseNote = ooctave * NOTES + opitch;
+    note = getNumberedNote(inst,obaseNote);
+
+    factors = (double *) New(sizeof(double) * note->samples);
+
+    index = 0;
+    totalBeats = 0;
+    factor = 1.0;
+
+    /* extract the arguments */
+
+    va_list ap;
+
+    va_start(ap, opitch);
+
+    octave = va_arg(ap,int);
+    while (octave != 0)
+        {
+        int baseNote,factorCount;
+        double delta,steps;
+
+        pitch = va_arg(ap,int);
+        baseNote = octave * NOTES + pitch;
+
+        if (baseNote < 0 || baseNote >= OCTAVES * NOTES)
+            Fatal("draw: bad octave/pitch pair: "
+                "%d,%d (missing zero terminator?)\n",octave,pitch);
+
+        beats = va_arg(ap,double);
+
+        if (firstNote)
+            {
+            oldFactor = pow(SEMITONE,baseNote - obaseNote);
+            factor = oldFactor;
+            firstNote = 0;
+            }
+        else
+            {
+            oldFactor = factor;
+            factor = pow(SEMITONE,baseNote - obaseNote);
+            }
+
+        factorCount = beatsToSamples(beats) * factor;
+        steps = sampleRate * drawRamp;
+        delta = (factor - oldFactor) / steps;
+        //printf("ramp is %f, steps is %f\n",delta,steps);
+
+        for (i = 0; index < note->samples && i < factorCount; ++i)
+            {
+            factors [index++] = oldFactor;
+            if (i < steps) oldFactor += delta;
+            }
+
+        totalBeats += beats;
+        octave = va_arg(ap,int);
+        }
+
+    va_end(ap);
+
+    /* fill out the rest of the array with the last value of factor */
+
+    for ( ; index < note->samples; ++index)
+        factors[index] = factor;
+
+    resampled = aresample(note,factors);
+    
+    channel = randChan() % resampled->channels;
+    dplay(totalBeats,resampled->data[channel],resampled->samples,note->bitsPerSample);
+
+    freeRRA(resampled,0);
+    free(factors);
+    }
+
+void
+ndraw(int inst,int obaseNote,...)
+    {
+    int i;
+    int index;
+    RRA *note,*resampled;
+    int baseNote, channel;
+    double beats,totalBeats;
+    double factor,*factors;
+
+    dTrace("entering\n");;
+
+    note = getNumberedNote(inst,obaseNote);
+
+    factors = (double *) New(sizeof(double) * note->samples);
+
+    index = 0;
+    totalBeats = 0;
+    factor = 1.0;
+
+    /* extract the arguments */
+
+    va_list ap;
+
+    va_start(ap, obaseNote);
+
+    baseNote = va_arg(ap,int);
+    while (baseNote != 0)
+        {
+        if (baseNote < 0 || baseNote >= OCTAVES * NOTES)
+            Fatal("ndraw: bad numbered note: "
+                "%d (missing zero terminator?)\n",baseNote);
+
+        beats = va_arg(ap,double);
+
+        factor = pow(SEMITONE,baseNote - obaseNote);
+
+        for (i = 0;
+                index < note->samples && i < beatsToSamples(beats) * factor;
+                    ++i)
+            {
+            factors [index++] = factor;
+            }
+
+        totalBeats += beats;
+        baseNote = va_arg(ap,int);
+        }
+
+    va_end(ap);
+
+    /* fill out the rest of the array with the last value of factor */
+
+    for ( ; index < note->samples; ++index)
+        factors[index] = factor;
+
+    resampled = aresample(note,factors);
+
+    channel = randChan() % resampled->channels;
+    dplay(totalBeats,resampled->data[channel],resampled->samples,note->bitsPerSample);
+
+    freeRRA(resampled,0);
+    free(factors);
+    }
+    
+/* function fdraw
+ *
+ * a note playing function which changes the pitch of a note
+ * while it's being played (i.e., the note is not restarted 
+ * upon subsequent pitch changes
+ *
+ * The given numbered note is the note to be resampled.
+ * The count is how many resample semitone fraction/beat pairs follow.
+ *
+ */
+
+void
+fdraw(int inst,int obaseNote,int count,...)
+    {
+    int i;
+    int index, channel;
+    RRA *note,*resampled;
+    double fraction;
+    double beats,totalBeats;
+    double factor,*factors;
+
+    dTrace("entering\n");;
+
+    note = getNumberedNote(inst,obaseNote);
+
+    factors = (double *) New(sizeof(double) * note->samples);
+
+    index = 0;
+    totalBeats = 0;
+    factor = 1.0;
+
+    /* extract the arguments */
+
+    va_list ap;
+
+    va_start(ap, count);
+
+    while (count > 0)
+        {
+        fraction = va_arg(ap,double);
+
+        beats = va_arg(ap,double);
+
+        factor = pow(SEMITONE,fraction);
+
+        for (i = 0;
+                index < note->samples && i < beatsToSamples(beats) * factor;
+                    ++i)
+            {
+            factors [index++] = factor;
+            }
+
+        totalBeats += beats;
+
+        --count;
+        }
+
+    va_end(ap);
+
+    /* fill out the rest of the array with the last value of factor */
+
+    for ( ; index < note->samples; ++index)
+        factors[index] = factor;
+
+    resampled = aresample(note,factors);
+
+    channel = randChan() % resampled->channels;
+    dplay(totalBeats,resampled->data[channel],resampled->samples,note->bitsPerSample);
+
+    freeRRA(resampled,0);
+    free(factors);
+    }
+    
+/* function resolve,resovleAbsolute
+ *
+ * a two note version of draw
+ *
+ * the first note resolves into the second after 'duration'
+ *
+ * this gives a different sound than playing the first note
+ * and then playing the second via 'play'
+ *
+ */
+
+void
+resolve(int inst,int soctave,int spitch,double sbeats,
+        int eoctave,int epitch,double ebeats)
+    {
+    draw(inst,soctave,spitch,
+        soctave,spitch,sbeats,
+        eoctave,epitch,ebeats,
+        0
+        );
+    }
+
+void
+nresolve(int inst,int startNote,double sbeats,int endNote,double ebeats)
+    {
+    printf("in nresolve...\n");
+    ndraw(inst,endNote,
+        startNote * 1.0,sbeats,
+        endNote * 1.0,ebeats,
+        0
+        );
+    }
+
+/* function trill
+ *
+ * note plays for 'start' beats and then oscillates 'count' times
+ * around +range and -range
+ *
+ * each oscillation lasts 2 * 'delta'
+ *
+ * a wrapper (eventually) for dtrill
+ *
+ */
+
+void
+trill(double beats,int inst,int octave,int pitch,
+        double start,double delta,double down,double up,int count)
+    {
+    ntrill(beats,inst,octave * NOTES + pitch,start,delta,down,up,count);
+    }
+
+/* function ntrill
+ *
+ * note plays for 'start' beats and then oscillates 'count' times
+ * between 'down' and 'up'
+ *
+ * each oscillation lasts 2 * 'delta'
+ *
+ * a wrapper for dtrill
+ *
+ */
+
+void
+ntrill(double beats,int inst,int baseNote,
+        double start,double delta,double down,double up,int count)
+    {
+    RRA *h;
+    int channel;
+
+    h = getNumberedNote(inst,baseNote);
+
+    channel = randChan() % h->channels;
+    dtrill(beats,h->data[channel],h->samples,start,delta,down,up,count,h->bitsPerSample);
+    }
+
+/* function rtrill
+ *
+ * note plays for 'start' beats and then oscillates 'count' times
+ * around 'down' and 'up'
+ *
+ * each oscillation lasts 2 * 'delta'
+ *
+ * a wrapper for dtrill
+ *
+ */
+
+void
+rtrill(double beats,RRA *h,
+        double start,double delta,double down,double up,int count)
+    {
+    int channel;
+
+    channel = randChan() % h->channels;
+    dtrill(beats,h->data[channel],h->samples,start,delta,down,up,count,h->bitsPerSample);
+    }
+
+/* function dtrill
+ *
+ * note plays for 'start' beats and then oscillates 'count' times
+ * between 'down' and 'up'
+ *
+ * each oscillation lasts 2 * 'delta'
+ *
+ * the note is given as an integer array/length pair
+ *
+ */
+
+void
+dtrill(double beats,int *data,int length,
+        double start,double delta,double down,double up,int count,int bps)
+    {
+    int i;
+    int mode;
+    double next;
+    double t,factor;
+    int *result = (int *) New(sizeof(int) * length);
+
+    i = 0;
+    t = 0;
+
+    mode = 1;
+    factor = 1;
+    next = beatsToSamples(start);
+    while (i < length)
+        {
+        result[i] = interp(data,length,t);
+        t += factor;
+        if (i > next)
+            {
+            if (count > 0)
+                next += beatsToSamples(delta);
+            else
+                {
+                next = length;
+                mode = 0;
+                factor = 1;
+                }
+            if (mode == 1)
+                {
+                factor = 1 + down;
+                mode = -1;
+                }
+            else if (mode == -1)
+                {
+                factor = 1 + up;
+                mode = 1;
+                --count;
+                }
+            }
+        ++i;
+        }
+
+    dplay(beats,result,length,bps);
+
+    free(result);
+    }
+
+void
+bend(double beats,int inst,int octave,int pitch,double start,
+    double startLength,double bendLength)
+    {
+    rbend(beats,getNote(inst,octave,pitch),start,startLength,bendLength);
+    }
+
+void
+nbend(double beats,int inst,int note,double start,
+    double startLength, double bendLength)
+    {
+    rbend(beats,getNumberedNote(inst,note),start,startLength,bendLength);
+    }
+
+void
+rbend(double beats,RRA *h,double start,
+    double startLength,double bendLength)
+    {
+    int channel;    
+
+    channel = randChan() % h->channels;
+    dbend(beats,h->data[channel],h->samples,start,startLength,bendLength,h->bitsPerSample);
+    }
+
+void
+dbend(double beats,int *data,int length,double start,
+    double startLength,double bendLength,int bps)
+    {
+    int i;
+    int* bentNote;
+    int maxSamples,startSamples,bendSamples;
+    double t;
+    double adjust,delta;
+    
+    maxSamples = 4 * length;
+
+    bentNote = (int *) New(sizeof(int) * maxSamples);
+
+    /* resample */
+
+    bendSamples = beatsToSamples(bendLength);
+    startSamples = beatsToSamples(startLength);
+    delta = (1.0 - start) / bendSamples;
+
+    i = 0;
+    t = 0;
+    adjust = start;
+    while (i < maxSamples && i < length)
+        {
+        bentNote[i] = interp(data,length,t);
+
+        if (i >= startSamples + bendSamples)
+            adjust = 1.0;
+        else if (i > startSamples)
+            adjust += delta;
+
+        /* update the new time */
+
+        t += adjust;
+        ++i;
+        }
+
+    dplay(beats,bentNote,i,bps);
+
+    free(bentNote);
+    }
+
+void
+silence(double beats)
+    {
+    rest(beats);
+    }
+
+void
+rest(double beats)
+    {
+    forwards(beats);
+    }
+
+void
+space(double beats)
+    {
+    spaces += beatsToSamples(beats);
+    rest(beats);
+    }
+
+/********************* EFFECTS ***********************/
+
+void
+beginCrescendo(double factor)
+    {
+    if (crescendoStart > 0) Fatal("Rewound before crescendo");
+    crescendoStart = location;
+    crescendoFactor = factor;
+    }
+
+void
+endCrescendo()
+    {
+    int i = 0, channel;
+    double amp,delta;
+
+    if (crescendoStart < 0 || crescendoStart == sustainedLocation)
+        Fatal ("Rewound before crescendo");
+
+    //delta = (crescendoFactor - 1.0) / (sustainedLocation - crescendoStart);
+    delta = pow(crescendoFactor,1.0 / (sustainedLocation - crescendoStart));
+
+    amp = 1 * delta;
+
+    for (i = crescendoStart; i < sustainedLocation; ++i)
+        {
+        channel = randChan() % output->channels;
+        output->data[channel][i] *= amp;
+        amp *= delta;
+        }
+
+    crescendoStart = -1;
+    amplitude *= crescendoFactor;
+    crescendoFactor = 1;
+    }
+
+/*************** PUBLIC INFORMATION FUNCTIONS  ********************/
+
+char *
+getVersion()
+    {
+    return LIBRARY_VERSION;
+    }
+
+int
+getSampleRate()
+    {
+    return sampleRate;
+    }
+
+int
+getSamplesGenerated()
+    {
+    return maxLocation;
+    }
+
+int
+getSamplesWritten()
+    {
+    return samplesWritten;
+    }
+
+int
+getBitsPerSample()
+    {
+    return bitsPerSample;
+    }
+
+int
+getBytesPerSample()
+    {
+    return bitsPerSample / 8;
+    }
+
+/**************** PUBLIC CONTROL FUNCTIONS ********************/
+
+int
+setRamp(int mode)
+    {
+    int temp;
+
+    temp = ramp;
+    ramp = mode;
+    return temp;
+    }
+
+int
+getRamp()
+    {
+    return ramp;
+    }
+
+void
+setTime(int bpm,int note)
+    {
+    previousMeasures += samplesToMeasures(location - spaces - measuredLocation);
+    measuredLocation = location;
+
+    beatsPerMeasure = bpm;
+    noteValue = note;
+
+    T  = note / 32.0;
+    S  = T * 2.0;
+    I  = S * 2.0;
+    Q  = I * 2.0;
+    H  = Q * 2.0;
+    W  = H * 2.0;
+
+    Td = T * 1.5;
+    Sd = S * 1.5;
+    Id = I * 1.5;
+    Qd = Q * 1.5;
+    Hd = H * 1.5;
+    Wd = W * 1.5;
+
+    Tt = T * 2 / 3.0;
+    St = S * 2 / 3.0;
+    It = I * 2 / 3.0;
+    Qt = Q * 2 / 3.0;
+    Ht = H * 2 / 3.0;
+    Wt = W * 2 / 3.0;
+    }
+
+int
+getBeatsPerMeasure()
+    {
+    return beatsPerMeasure;
+    }
+
+int
+getNoteValue()
+    {
+    return noteValue;
+    }
+
+
+int
+setPitchShift(int inst,int n)
+    {
+    int old = pitchShift[inst];
+    pitchShift[inst] = n;
+    return old;
+    }
+
+int
+getPitchShift(int inst)
+    {
+    return pitchShift[inst];
+    }
+
+double
+setSkipBeats(double b)
+    {
+    double temp = samplesToBeats(skip);
+    skip = beatsToSamples(b);
+    return temp;
+    }
+
+double
+getSkipBeats(void)
+    {
+    return samplesToBeats(skip);
+    }
+
+double
+setSkipSeconds(double t)
+    {
+    double temp = samplesToSeconds(skip);
+    skip = secondsToSamples(t);
+    return temp;
+    }
+
+double
+getSkipSeconds()
+    {
+    return samplesToSeconds(skip);
+    }
+
+double
+setSustain(double amt)
+    {
+    double temp = sustain;
+    sustain = amt;
+    return temp;
+    }
+
+double
+getSustain()
+    {
+    return sustain;
+    }
+
+
+double
+setStride(double amt)
+    {
+    int temp = stride;
+    stride = amt;
+    return temp;
+    }
+
+double
+getStride()
+    {
+    return stride;
+    }
+
+double
+setAmplitude(double amp)
+    {
+    double old = amplitude;
+    amplitude = amp;
+    return old;
+    }
+
+double changeAmplitude(double delta)
+    {
+    double old = amplitude;
+    amplitude += delta;
+    return old;
+    }
+
+void
+louder(double factor)
+    {
+    if (factor == 0.0) factor = 2;
+    setAmplitude(getAmplitude() * factor);
+    }
+
+void
+softer(double factor)
+    {
+    if (factor == 0.0) factor = 2;
+    setAmplitude(getAmplitude() / factor);
+    }
+
+double
+getAmplitude()
+    {
+    return amplitude;
+    }
+
+double
+setTempo(double amount)
+    {
+    double temp = beatsPerMinute;
+    beatsPerMinute = amount;
+    return temp;
+    }
+
+double
+getTempo()
+    {
+    return beatsPerMinute;
+    }
+
+
+double
+setDrawRamp(double amount)
+    {
+    double temp = drawRamp;
+    drawRamp = amount;
+    return temp;
+    }
+
+double
+getDrawRamp()
+    {
+    return drawRamp;
+    }
+
+double
+setSlopTiming(double s)
+    {
+    double temp = slopTiming;
+    slopTiming = s;
+    return temp;
+    }
+
+double
+setSlopAmplitude(double s)
+    {
+    double temp = slopAmplitude;
+    slopAmplitude = s;
+    return temp;
+    }
+
+double
+setSlopPitch(double s)
+    {
+    double temp = slopPitch;
+    slopPitch = s;
+    return temp;
+    }
+
+double
+getPrimaryEmphasis()
+    {
+    return primaryEmphasis;
+    }
+  
+
+double
+setPrimaryEmphasis(double factor)
+    {
+    double temp = primaryEmphasis;
+    primaryEmphasis = factor;
+    return temp;
+    }
+  
+double
+getSecondaryEmphasis()
+    {
+    return secondaryEmphasis;
+    }
+  
+
+double
+setSecondaryEmphasis(double factor)
+    {
+    double temp = secondaryEmphasis;
+    secondaryEmphasis = factor;
+    return temp;
+    }
+  
+
+/************* PUBLIC NOTE RETRIEVAL FUNCTIONS *****************/
+
+/* function getNote
+ *
+ * a function for retrieving the specified note by either
+ * reading it in or resampling a nearby note
+ *
+ */
+
+RRA *
+getNote(int inst,int octave,int pitch)
+    {
+    return getNumberedNote(inst,octave * NOTES + pitch);
+    }
+
+/* function getAbsoluteNote
+ *
+ * an alternative form of getNote
+ *
+ */
+
+RRA *
+getNumberedNote(int inst,int baseNote)
+    {
+    if (filterCount[inst] > 0)
+        return getFilteredNumberedNote(inst,baseNote);
+    else
+        return getCleanNumberedNote(inst,baseNote);
+    }
+
+RRA *
+setCleanNote(int inst,int octave,int pitch,RRA *h)
+    {
+    return setCleanNumberedNote(inst,octave * NOTES + pitch,h);
+    }
+
+RRA *
+getCleanNote(int inst,int octave,int pitch)
+    {
+    return getCleanNumberedNote(inst,octave * NOTES + pitch);
+    }
+
+/* function getCleanNumberedNote
+ *
+ * a rather complicated routine for retrieving a specified note
+ *
+ * the routine makes four attempts at finding a note
+ *
+ * first, it checks the scale array to see if it already
+ * has been read in
+ *
+ * then it attempts to load the note exactly as specified
+ *
+ * if the attempt fails, it assumes the note is from a single
+ * octave note collection (an octave value of 3 is used in
+ * this case) and attempts to read in the note
+ *
+ * if that fails, it assumes the note is from a single
+ * note collection (octave is 3 and pitch is 0) and attempts
+ * to read in the note
+ *
+ * if that fails, the function finds the closest note
+ * and resamples it
+ *
+ */
+
+RRA *
+setCleanNumberedNote(int inst, int baseNote,RRA *h)
+    {
+    RRA *temp = scale[inst][baseNote];
+    scale[inst][baseNote] = h;
+    return temp;
+    }
+
+RRA *
+getCleanNumberedNote(int inst, int baseNote)
+    {
+    int spot;
+    double factor;
+    RRA *h;
+
+    if (baseNote < 0 || baseNote >= OCTAVES * NOTES)
+        Fatal("pitch out of range, inst %d, note %d\n",inst,baseNote);
+       
+    /* see if the note exists */
+
+    if (scale[inst][baseNote] != 0) return scale[inst][baseNote];
+
+    /* it doesn't, so force a read of the closest note */
+
+    readClosestNote(inst,baseNote);
+
+    /* see if the note exists now */
+
+    if (scale[inst][baseNote] != 0)
+        {
+        return scale[inst][baseNote];
+        }
+
+    /* it doesn't, so find the closest note and pitch shift it */
+
+    spot = findClosestNote(inst,baseNote);
+
+    factor = pow(SEMITONE,baseNote-spot);
+
+    dDebug("factor was %g\n", factor);
+
+    h = scale[inst][spot];
+
+    printf("generating %s%s%d (using %s%s%d)\n",
+            InstrumentBase[inst],
+            NoteNames[baseNote % NOTES],baseNote / NOTES,
+            InstrumentBase[inst],
+            NoteNames[spot%NOTES],spot/NOTES
+            );
+
+    originals[inst][baseNote] = 0;
+    
+    h = resample(h,factor);
+    printf ("    SUCCESS!\n");
+    scale[inst][baseNote] = h;
+
+    return h;
+    }
+
+/* function getFilteredNote
+ *
+ * a function for running a clean note through a set
+ * of filters and caching the modified note
+ *
+ */
+
+RRA *
+setFilteredNote(int inst,int octave,int pitch,RRA *h)
+    {
+    return setFilteredNumberedNote(inst,octave * NOTES + pitch,h);
+    }
+
+RRA *
+getFilteredNote(int inst,int octave,int pitch)
+    {
+    return getFilteredNumberedNote(inst,octave * NOTES + pitch);
+    }
+
+RRA *
+setFilteredNumberedNote(int inst,int baseNote,RRA *h)
+    {
+    RRA *temp = filtered[inst][baseNote];
+    filtered[inst][baseNote] = h;
+    return temp;
+    }
+
+RRA *
+getFilteredNumberedNote(int inst,int baseNote)
+    {
+    if (filtered[inst][baseNote] == 0)
+        {
+        filtered[inst][baseNote] =
+            cloneRRA(getCleanNumberedNote(inst,baseNote),0);
+        rfilter(inst,filtered[inst][baseNote]);
+        }
+
+    return filtered[inst][baseNote];
+    }
+
+/******** FILTER HANDLERS **************************************/
+
+void
+pushFilter(int inst,filter_t f)
+    {
+    if (inst < 0 || inst >= InstrumentCount)
+        Fatal("pushFilter: instrument number %d out of bounds\n",inst);
+
+    if (filterCount[inst] == FILTERS)
+        Fatal("pushFilter: too many filters!\n");
+
+   filters[inst][filterCount[inst]] = f;
+
+   filterCount[inst] += 1;
+   }
+
+filter_t
+popFilter(int inst)
+    {
+    filter_t temp;
+
+    if (filterCount[inst] == 0)
+        Fatal("popFilter: no filter to pop for instrument %d\n",inst);
+
+    temp = filters[inst][filterCount[inst] - 1];
+    filterCount[inst] -= 1;
+    return temp;
+    }
+
+/* function filter
+ *
+ * permanently changes a clean note to a filtered note!
+ *
+ */
+
+void filter(int inst,int octave,int pitch)
+    {
+    // Caution: This filter is not aware of multichanneled replicants!
+    RRA *h;
+
+    h = getCleanNumberedNote(inst,octave * NOTES + pitch);
+    dfilter(inst,h->data[0],h->samples);
+    }
+
+/* function nfilter
+ *
+ * permanently changes a clean note to a filtered note!
+ *
+ */
+
+void nfilter(int inst,int numberedNote)
+    {
+    // Caution: This filter is not aware of multichanneled replicants!
+    RRA *h;
+
+    h = getCleanNumberedNote(inst,numberedNote);
+    dfilter(inst,h->data[0],h->samples);
+    }
+
+/* function rfilter
+ *
+ * permanently filters the given note!
+ *
+ */
+
+void
+rfilter(int inst,RRA *h)
+    {
+    // Caution: This filter is not aware of multichanneled replicants!
+    dfilter(inst,h->data[0],h->samples);
+    }
+
+void
+dfilter(int inst,int *data,int length)
+    {
+    int k;
+
+    for (k = 0; k < filterCount[inst]; ++k)
+        {
+        filter_t f = filters[inst][k];
+        f(data,length);
+        }
+    }
+
+
+/*****************************************************/
+/*************** PRIVATE METHODS *********************/
+/*****************************************************/
+
+/********** PRIVATE NOTE RETRIEVAL ROUTINES **********/
+
+static void
+readClosestNote(int inst,int baseNote)
+    {
+    int i;
+
+    for (i = 0; i < OCTAVES * NOTES; ++i)
+        {
+        int up = baseNote + i;
+        int down = baseNote - i;
+
+        if (up < OCTAVES * NOTES)
+            {
+            dDebug("looking for note %d\n",up);
+            if (originals[inst][up] == 1) return;
+            if (readNote(inst,up) != 0) return;
+            }
+
+        if (i != 0 && down >= 0)
+            {
+            dDebug("looking for note %d\n",down);
+            if (originals[inst][down] == 1) return;
+            if (readNote(inst,down) != 0) return;
+            }
+        }
+
+    Fatal("No notes found for instrument %d\n"
+          "(%s%s)\n",inst,InstrumentDir[inst],InstrumentBase[inst]);
+    }
+
+static RRA *
+readNote(int inst,int baseNote)
+    {
+    RRA *h;
+    FILE *fp;
+    char buffer[NOTE_NAME_LENGTH];
+
+    /* try pitch octave name */
+
+    sprintf(buffer, "%s%s%s%d.rra",
+        InstrumentDir[inst], InstrumentBase[inst],
+        NoteNames[baseNote % NOTES], baseNote / NOTES
+        );
+
+    dDebug("attempting to read %s\n",buffer);
+    fp = fopen(buffer,"r");
+
+    if (fp)
+        {
+        h = readRRA(fp,0);
+        if (h->samples == 0) Fatal("note %s is empty!\n",buffer);
+        fclose(fp);
+        ensureFadeIn(h);
+        scale[inst][baseNote] = h;
+        originals[inst][baseNote] = 1;
+        //printf("successfully read %s\n",buffer);
+        return h;
+        }
+
+    /* try Pitch octave name */
+
+    sprintf(buffer, "%s%s%s%d.rra",
+        InstrumentDir[inst], InstrumentBase[inst],
+        NoteNAMES[baseNote % NOTES], baseNote / NOTES
+        );
+
+    dDebug("attempting to read %s\n",buffer);
+    fp = fopen(buffer,"r");
+
+    if (fp)
+        {
+        h = readRRA(fp,0);
+        if (h->samples == 0) Fatal("note %s is empty!\n",buffer);
+        fclose(fp);
+        ensureFadeIn(h);
+        scale[inst][baseNote] = h;
+        originals[inst][baseNote] = 1;
+        //printf("successfully read %s\n",buffer);
+        return h;
+        }
+
+    /* try baseNote name */
+
+    sprintf(buffer, "%s%s%d.rra",
+        InstrumentDir[inst], InstrumentBase[inst],
+        baseNote
+        );
+
+    dDebug("attempting to read %s\n",buffer);
+    fp = fopen(buffer,"r");
+
+    if (fp)
+        {
+        h = readRRA(fp,0);
+        if (h->samples == 0) Fatal("note %s is empty!\n",buffer);
+        fclose(fp);
+        ensureFadeIn(h);
+        scale[inst][baseNote] = h;
+        originals[inst][baseNote] = 1;
+        //printf("successfully read %s\n",buffer);
+        return h;
+        }
+
+    /* try octave pitch name */
+
+    sprintf(buffer, "%s%s%d%s.rra",
+        InstrumentDir[inst], InstrumentBase[inst],
+        baseNote / NOTES, NoteNames[baseNote % NOTES]
+        );
+
+    dDebug("attempting to read %s\n",buffer);
+    fp = fopen(buffer,"r");
+
+    if (fp)
+        {
+        h = readRRA(fp,0);
+        if (h->samples == 0) Fatal("note %s is empty!\n",buffer);
+        fclose(fp);
+        ensureFadeIn(h);
+        scale[inst][baseNote] = h;
+        originals[inst][baseNote] = 1;
+        //printf("successfully read %s\n",buffer);
+        return h;
+        }
+
+    /* try octave Pitch name */
+
+    sprintf(buffer, "%s%s%d%s.rra",
+        InstrumentDir[inst], InstrumentBase[inst],
+        baseNote / NOTES, NoteNAMES[baseNote % NOTES]
+        );
+
+    dDebug("attempting to read %s\n",buffer);
+    fp = fopen(buffer,"r");
+
+    if (fp)
+        {
+        h = readRRA(fp,0);
+        if (h->samples == 0) Fatal("note %s is empty!\n",buffer);
+        fclose(fp);
+        ensureFadeIn(h);
+        scale[inst][baseNote] = h;
+        originals[inst][baseNote] = 1;
+        //printf("successfully read %s\n",buffer);
+        return h;
+        }
+
+    return 0;
+    }
+
+/* function findClosestNote
+ *
+ * This function finds the closest original (not resampled) note
+ * and returns its index
+ *
+ */
+
+static int
+findClosestNote(int inst, int baseNote)
+    {
+    int i;
+
+    //printf("findClosestNote: instrument %d, octave: %d, note: %s\n",
+        //inst,baseNote / NOTES,NoteNames[baseNote % NOTES]);
+
+    for (i = 0; i < OCTAVES * NOTES; ++i)
+        {
+        int up = baseNote + i;
+        int down = baseNote - i;
+
+        if (up < OCTAVES * NOTES && originals[inst][up] == 1)
+            return up;
+
+        if (down >= 0 && originals[inst][down] == 1)
+            return down;
+        }
+
+    Fatal("INTERNAL ERROR: findClosestNote failed\n");
+
+    return 0;
+    }
+
+/*************** PRIVATE MUTATORS ********************/
+
+/* function growOutput
+ *
+ * a wrapper for growRRA that ensures the newly added capacit
+ * is zeroed out
+ *
+ */
+
+static void
+growOutput()
+    {
+    int i;
+    int samples = output->samples;
+
+    growRRA(output);
+
+    for (i = samples; i < output->samples; ++i)
+        output->data[0][i] = 0;
+    }
+
+/* function ensureFadeIn
+ *
+ * make sure a note begins with zeros
+ *
+ */
+
+static void
+ensureFadeIn(RRA *h)
+    {
+    int i;
+    double factor = 0.00001;
+    int multiplier = 3;
+
+    /* quickly ramp amplitudes up from zero */
+    /* a multiplier of 3 means a 10 sample fade in */
+
+    for (i = 0; i < h->samples && factor < 0; ++i)
+        {
+        if (h->data[0][i] == 0) return;
+        h->data[0][i] = h->data[0][i] * factor;
+        factor *= multiplier;
+        }
+    }
+
+/********* INTERPOLATION ROUTINES *********************************/
+
+int
+interp(int *data,int length,double t)
+    {
+    int lo = (int) t;
+    int hi = lo + 1;
+    int lolo = lo;
+    int hihi = hi;
+    double mid;
+    double fraction;
+    int result;
+
+    if (lo >= length-1) return data[length-1];
+
+    if (lo > 0) --lolo;
+    if (hi < length-1) ++hihi;
+
+    fraction = t - lo;
+    mid = (3.0 * data[lo] - data[lolo] + 3.0 * data[hi] - data[hihi]) / 4.0;
+
+    if (fraction < 0.5)
+        result = (int)(data[lo] + (mid - data[lo])*2*fraction);
+    else
+        result = (int)(mid + (data[hi] - mid)*2*(fraction-0.5));
+
+    return result;
+    }
+
+double
+rinterp(double *data,int length,double t)
+    {
+    int lo = (int) t;
+    int hi = lo + 1;
+    int lolo = lo;
+    int hihi = hi;
+    double mid;
+    double fraction;
+    double result;
+
+    if (lo >= length-1) return data[length-1];
+
+    if (lo > 0) --lolo;
+    if (hi < length-1) ++hihi;
+
+    fraction = t - lo;
+    mid = (3.0 * data[lo] - data[lolo] + 3.0 * data[hi] - data[hihi]) / 4.0;
+
+    if (fraction < 0.5)
+        result = data[lo] + (mid - data[lo])*2*fraction;
+    else
+        result = mid + (data[hi] - mid)*2*(fraction-0.5);
+
+    return result;
+    }
+
+/*
+RRA *
+resample(int inst,int octave,int pitch,double factor)
+    {
+    return nresample(inst,octave * NOTES + pitch,factor);
+    }
+
+RRA *
+nresample(int inst,int baseNote,double factor)
+    {
+    RRA *note;
+
+    note = getNumberedNote(inst,baseNote);
+
+    return rresample(note,factor);
+    }
+
+RRA *
+aresample(int inst,int octave,int pitch,double *factors,int length)
+    {
+    return anresample(inst,octave * NOTES + pitch,factors,length);
+    }
+
+RRA *
+anresample(int inst,int baseNote,double *factors,int length)
+    {
+    RRA *note;
+
+    note = getNumberedNote(inst,baseNote);
+
+    return aresample(note,factors,length);
+    }
+*/
+
+RRA *
+resample(RRA *note,double factor)
+    {
+    int i, j;
+    int length;
+    double t;
+    RRA *h;
+
+    length = note->samples;
+
+    h = newRRA(sampleRate,note->bitsPerSample,note->channels,length);
+
+    dDebug("dresample: samples in original note is %d\n",length);
+    dDebug("dresample: factor is %f\n",factor);
+    //printf("samples in original note is %d\n",length);
+    //printf("factor is %f\n",factor);
+
+    i = 0;
+    j = 0;
+    while (j < note->channels)
+        {
+        t = 0;
+        i = 0;
+        while (t < length)
+            {
+            if (i >= h->samples)
+                {
+                //printf("%d samples\n",h->samples);
+                //printf("t is %f\n",t);
+                growRRA(h);
+                }
+
+            h->data[j][i] = interp(note->data[j],length,t);
+            t += factor;
+            ++i;
+            }
+        ++j;
+        }
+
+    // remove the excess capacity in the rra object
+
+    shrinkRRA(h,i);
+
+    dDebug("leaving\n");
+
+    return h;
+    }
+
+RRA *
+aresample(RRA *note,double *factors)
+    {
+    int i, j;
+    double t;
+    RRA *h;
+
+    h = newRRA(sampleRate,note->bitsPerSample,note->channels,note->samples);
+
+    i = 0;
+    j = 0;
+    t = 0;
+    while (j < note->channels)
+        {
+        i = 0;
+        t = 0;
+        while (t < note->samples)
+            {
+            if (i >= h->samples) growRRA(h);
+
+            h->data[j][i] = interp(note->data[j],note->samples,t);
+            if (((int) t) >= note->samples)
+                t += factors[note->samples - 1];
+            else
+                t += factors[(int) t];
+            ++i;
+            }
+        ++j;
+        }
+
+    // remove the excess capacity
+
+    shrinkRRA(h,i);
+
+    dDebug("leaving\n");
+
+    return h;
+    }
+
+/************** CONVERSION ROUTINES *************************/
+
+double
+beatsToSamples(double beats)
+    {
+    double s = beats * 60 / beatsPerMinute * getSampleRate();
+    return s;
+    }
+
+double
+samplesToBeats(double samples)
+    {
+    return samples
+           / (double) getSampleRate()
+           / 60.0
+           * beatsPerMinute;
+    }
+
+double
+secondsToSamples(double t)
+    {
+    return t * getSampleRate();
+    }
+
+double
+samplesToSeconds(double samples)
+    {
+    return ((double) samples) / getSampleRate();
+    }
+
+double
+samplesToMeasures(double samples)
+    {
+    return samplesToBeats(samples)/ beatsPerMeasure;
+    }
+
+double
+measuresToSamples(double measures)
+    {
+    return beatsToSamples(measures * beatsPerMeasure);
+    }
+
+double
+measuresToBeats(double measures)
+    {
+    return measures * beatsPerMeasure;
+    }
+
+double
+beatsToMeasures(double beats)
+    {
+    return beats / beatsPerMeasure;
+    }
+
+double
+secondsToBeats(double seconds)
+    {
+    return seconds * beatsPerMinute / 60;
+    }
+
+double
+beatsToSeconds(double beats)
+    {
+    return beats * 60 / beatsPerMinute;
+    }
+
+void
+startCounting()
+    {
+    sampleCounter = location;
+    }
+
+double
+stopCounting()
+    {
+    return samplesToBeats(location - sampleCounter);
+    }
+
+void
+measure(const char *file,const char *function,const int line)
+    {
+    static int last = 0;
+
+    if (file == 0)
+        {
+        last = location;
+        //printf("location is %d\n",last);
+        //printf("last is %f\n",samplesToBeats(last));
+        //getchar();
+        }
+    else
+        {
+        int span = location - last;
+        //printf("span is %d\n",span);
+        printf("%s: %s: %4d: %f measures (%f total)\n",
+                file,function,line,samplesToMeasures(span),
+                samplesToMeasures(location - spaces - measuredLocation)
+		    + previousMeasures);
+        }
+    }
+
+/************** MOVEMENT ROUTINES ********************************/
+
+double
+backwards(double beats)
+    {
+    return forwards(-beats);
+    }
+
+double
+setLocation(double beats)
+    {
+    double temp = samplesToBeats(location);
+    forwards(beats - temp);
+    return temp;
+    }
+
+double
+getLocation()
+    {
+    return samplesToBeats(location);
+    }
+
+double
+forwards(double beats)
+    {
+    int old = location;
+
+    location += beatsToSamples(beats);
+
+    if (location > maxLocation)
+        {
+        while (location >= output->samples)
+            growOutput();
+        maxLocation = location;
+        }
+
+    if (location < 0)
+        {
+        printf("attempt to rewind to a negative index, "
+               "setting index to zero\n");
+        location = 0;
+        }
+
+    return samplesToBeats(old);
+    }
+
+
+/*
+ * The following set of functions
+ *
+ * is used to incorporate Drum comments
+ *
+ * in the RRA programmable file
+ *
+ * Warning: Barely tested
+ *
+ */
+void
+addComment(char *drumComment)
+    {
+    double spot;
+    COMMENT *temp, *temp1;
+    int commentSamples;
+    spot = getLocation();
+    commentSamples = beatsToSamples(spot);
+    commentBuffer = (COMMENT *)malloc(sizeof(COMMENT));
+
+    if(tail == NULL)
+        {
+        head = commentBuffer;
+        tail = commentBuffer;
+        commentBuffer->location = commentSamples;
+        strcpy(commentBuffer->comment,drumComment);
+        return;
+        }
+
+    if(commentSamples > tail->location) 
+	{
+	tail->next = commentBuffer;
+	commentBuffer->location = commentSamples;
+	strcpy(commentBuffer->comment,drumComment);
+	//fprintf(stderr,"%s at %d \n",commentBuffer->comment, commentBuffer->location);
+	commentBuffer->next = NULL;
+	tail = commentBuffer;
+	}
+    else /* insert in between */
+	{
+	/* check from head to current
+	 * tail, the most suitable
+	 * location to place the comment */
+
+	temp1 = (COMMENT *)malloc(sizeof(COMMENT));
+	temp1->location = 0;
+
+	temp = head;
+	while(temp != tail)
+	    {
+	    if(temp->location > commentSamples)
+		{
+		temp1->next = temp->next;		
+		temp->next = commentBuffer;
+		commentBuffer->location = commentSamples;
+		strcpy(commentBuffer->comment,drumComment);
+		fprintf(stderr,"%s at %f \n",commentBuffer->comment, commentBuffer->location);
+		commentBuffer->next = temp1->next;
+		break;
+		}
+	    temp = temp->next;	    
+	    }
+	}
+    }
+
+void 
+closeComments()    
+    {
+    COMMENT *temp;
+    temp = head;
+
+    while(temp)
+	{
+	head = temp->next;
+	free(temp);
+	temp = head;
+	}
+    }
+
+/* 
+ * Returns location to put
+ * comment to the RRA file
+ *
+ */
+int 
+readComment()
+    {
+    static COMMENT *temp ;
+    int samples;
+
+    temp = head;
+
+    if(temp)
+	{
+	samples = temp->location;
+	temp = temp->next;
+	fprintf(stderr,"samples:: %d \n",samples);
+	}
+    else
+	{
+	samples = 0;
+	}
+	
+    return samples;
+    }
+
+
+/* function closeOutput
+ *
+ * this function writes out the sound data that has been accumulated
+ * in the output object
+ *
+ * REQUIRED
+ *
+ */
+
+void 
+closeOutput()
+    {
+    FILE *fp;
+    int samples, i, j, commentLocation, offset = 0;
+    COMMENT *temp;
+    
+    if(commentBuffer != NULL)
+        temp = head;
+
+    if (maxLocation == 0)
+        printf("RRA file is empty\n");
+
+    shrinkRRA(output,maxLocation);
+
+    if (closed == 1)
+        Fatal("new output RRA file has not been opened\n");
+
+    fp = OpenFile(outputName,"w");
+
+    output->skip = (int) skip;
+
+    //writeRRA(fp,output,"createdBy: songlib",0);
+
+    samples = output->samples;
+
+    if(output->samples < 0) output->samples = 0;
+
+    writeRRAHeader(fp,output,"createdBy: songlib",0);
+
+    if(commentBuffer != NULL)
+        commentLocation = temp->location; 
+    //fprintf(stderr,"commentLocation = %d\n",commentLocation);
+
+    offset = (bitsPerSample == 8 ? 127:0);
+
+    for(i = 0; i < samples; ++i)
+        {
+        for(j = 0; j < output->channels; ++j)
+            {
+            while(commentLocation && (i == commentLocation) && commentBuffer != NULL)
+                {
+                fprintf(fp,"%s\n",temp->comment);
+                temp = temp->next;
+                //fprintf(stderr,"commentLocation = %d\n",commentLocation);
+                if(temp)
+                    commentLocation = temp->location;
+                else
+                    break;
+                }
+            fprintf(fp,"%d\n",output->data[j][i] + offset);
+            }
+        }
+
+    fclose(fp);
+
+    freeRRA(output,0);
+    
+    if (commentBuffer != NULL) closeComments();
+
+    samplesWritten = maxLocation;
+
+    closed = 1;
+
+    //return 0;
+    }
+    

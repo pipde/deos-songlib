@@ -1,0 +1,114 @@
+#!/bin/bash
+effect=
+options=
+
+# Argument = -r -R -h -e: -o:
+
+usage()
+{
+cat << EOF
+usage: $0 options
+
+This script adds a sox effect to an WAV or RRA audio stream.
+
+OPTIONS:
+   -h      Show this message
+   -r      stdin is an RRA stream
+   -R      convert stdout to RRA
+   -e      the effect (echo,flanger,etc)
+   -o      the effect options
+
+current effect: $effect
+current effect options: $options
+EOF
+}
+
+INPUT="WAV"
+OUTPUT="WAV"
+while getopts “hrRe:o:” OPTION # e and o take args
+do
+     case $OPTION in
+         #t) # example of an option that takes an arg
+         #    TEST=$OPTARG
+         #    ;;
+         #v) # example of an option that does not take an arg
+         #    VERBOSE=1
+         #    ;;
+         h)
+             usage
+             exit 0
+             ;;
+         r)
+             INPUT="RRA"
+             ;;
+         R)
+             OUTPUT="RRA"
+             #echo output is RRA
+             ;;
+         e)
+             effect=$OPTARG
+             #echo setting effect to $effect
+             ;;
+         o)
+             options=$OPTARG
+             #echo setting effect options to $options
+             ;;
+         ?)
+             usage
+             exit 1
+             ;;
+     esac
+done
+
+shift $((OPTIND-1))
+
+if [ $# == 1 -o $# == 2 ] ; then
+    if [ `basename $1 .rra`.rra == $1 ] ; then
+        INPUT="RRA"
+    fi
+fi
+
+if [ $# == 2 ] ; then
+    if [ `basename $2 .rra`.rra == $2 ] ; then
+        OUTPUT="RRA"
+    fi
+fi
+
+if [ $# == 1 ] ; then
+    if [ $INPUT == "RRA" -a $OUTPUT = "RRA" ] ; then
+        echo rra input, rra output >&2;
+        rra2wav $1 | sox -t wav - -t wav - $effect $options > .wav; wav2rra .wav
+    elif [ $INPUT == "RRA" ] ; then
+        echo rra input, wav output >&2;
+        rra2wav $1 | sox -t wav - -t wav - $effect $options
+    elif [ $OUTPUT == "RRA" ] ; then
+        echo wav input, rra output >&2;
+        sox $1 -t wav - $effect $options > .wav; wav2rra .wav
+    else
+        echo wav input, wav output >&2;
+        sox $1 -t wav - $effect $options
+    fi
+elif [ $# == 2 ] ; then
+    if [ $INPUT == "RRA" -a $OUTPUT == "RRA" ] ; then
+        rra2wav $1 | sox -t wav - -t wav - $effect $options > .wav; wav2rra .wav > $2
+    elif [ $INPUT == "RRA" ] ; then
+        rra2wav $1 | sox -t wav - $2 $effect $options
+    elif [ $OUTPUT == "RRA" ] ; then
+        sox $1 -t wav - $effect $options > .wav; wav2rra .wav > $2
+    else
+        sox $1 $2 $effect $options
+    fi
+elif [ $# == 0 ] ; then
+    if [ $INPUT == "RRA" -a $OUTPUT == "RRA" ] ; then
+        rra2wav | sox -t wav - -t wav - $effect $options > .wav; wav2rra .wav
+    elif [ $INPUT == "RRA" ] ; then
+        rra2wav | sox -t wav - -t wav - $effect $options
+    elif [ $OUTPUT == "RRA" ] ; then
+        sox -t wav - -t wav - $effect $options > .wav; wav2rra .wav
+    else
+        sox -t wav - -t wav - $effect $options
+    fi
+else
+    usage
+fi
+rm -f .wav

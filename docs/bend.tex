@@ -1,0 +1,62 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{Songlib: bend}
+
+\title{Songlib: bend\\
+\date{Revision Date: \today}}
+\author{written by: John C. Lusth}
+
+\date{Revision Date: \today}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{bend.pdf}}
+\W\htmlrule
+
+The bend family of note playing functions is similar to the
+play family, except the notes start out a little flat or
+a little sharp before resolving to the correct pitch. The
+bend family follows the {n,r,d} convention.
+
+\begin{verbatim}
+void bend(double beats,int instrument,int octave,int pitch,
+    double bendFactor,double startLength, double resolvedBeats);
+
+void nbend(double beats,int instrument,int numberedNote,
+    double bendFactor,double startLength,double resolvedBeats);
+
+void rbend(double beats,RRA *r,
+    double bendFactor,double startLength,double resolvedBeats);
+
+void dbend(double beats,int *data,int length,
+    double bendFactor,double startLength,double resolvedBeats);
+\end{verbatim}
+
+A {\it bendFactor} less than one means the note starts out flat.
+For example, a bend factor of \verb!1 / SEMITONE! means the note starts
+out one semitone low.
+A {\it bendFactor} greater than one means the note starts out sharp.
+For example, a bend factor of \verb!SEMITONE! means the note starts
+out one semitone higher.
+
+The {\it startLength} argument specifies how long the note should
+remain at its initial low or high pitch.
+The {\it resolvedBeats} argument specifies how long it takes
+the note to shift from the low or high start to the final resolved
+pitch.
+
+Here is a typical use. The note plays for a whole note and
+starts out one semitone flat:
+
+\begin{verbatim}
+bend(W,harmonica,3,C,1 / SEMITONE,Q,I);
+\end{verbatim}
+
+The note starts out at B2 and remains there for one quarter note.
+At that point, the note will start to travel upwards to reach
+C3. It will take one eighth note to resolve.
+
+\end{document}

@@ -1,0 +1,6 @@
+echo removing libsong.a
+sudo rm /usr/local/lib/libsong.a
+for i in *.h; do
+    echo removing $i
+	sudo rm -f /usr/local/include/songlib/$i
+    done

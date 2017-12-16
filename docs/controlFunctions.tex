@@ -1,0 +1,228 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{Songlib: control functions}
+
+\title{Songlib: control functions\\
+\date{Revision Date: \today}}
+
+\author{John C. Lusth}
+
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{controlFunctions.pdf}}
+\W\htmlrule
+
+\section*{Controlling output}
+
+There are a number of functions for controlling the output of played notes.
+
+\subsection*{setTime}
+
+\begin{verbatim}
+    void setTime(int beatsPerMeasure,int noteValue);
+\end{verbatim}
+
+Sets the time signature of a song. The {\it beatsPerMeasure} argument is used by
+the \see{keepingTime} facility.
+
+\subsection*{setPrimaryEmphasis, getPrimaryEmpahasis}
+
+\begin{verbatim}
+    double setPrimaryEmphasis(double amplification);
+    double getPrimaryEmphasis(void);
+    double setSecondaryEmphasis(double amplification);
+    double getSecondaryEmphasis(void);
+\end{verbatim}
+
+\Songlib\ can place emphasis on the first beat of a measure. It does so
+by increasing the amplitude of notes played at this location. To
+enable this feature, send an amplification value other than 1.
+\Songlib\ can also place an emphasis on the middle beat of
+a measure (assuming there is a middle beat) using
+{\it setSecondaryEmphasis}.
+Usually, the primary emphasis is set to be larger than the secondary
+emphasis.
+Sending amplification values less than one to either function causes
+the emphasized beat to be played softer than the surrounding beats.
+
+Both
+{\it setPrimaryEmphasis} and
+{\it setSecondaryEmphasis}
+return the previous amplification values.
+
+\subsection*{setSustain, getSustain}
+
+\begin{verbatim}
+    double setSustain(double fade);
+    double getSustain(void);
+\end{verbatim}
+
+Sustain governs how long a note continues to play after it has
+played for the requested number of beats. It is often undesirable
+for a note to abrubtly end as this often results in audible
+clicks upon playback. A better strategy is to have the note
+fade out. A sustain value near very close to one
+results in a long fade-out while
+a sustain value further away from one results in a quicker fade-out.
+
+Setting a sustain value of 1.0 means 'no fade' and previous notes will continue
+playing with no diminishing of amplitude until the note data is exhausted.
+A value of 0.0 means 
+note stops playing abruptly. Good values usually range
+between 0.999 and 0.99995. The default value is 0.999. A value of 0.99995
+gives an effect similar to holding the sustain pedal down on a piano.
+
+The return value of {\it setSustain} is the previous sustain value.
+
+\subsection*{setStride, getStride, setStrideSlop}
+
+\begin{verbatim}
+    double setStride(double delay);
+    double getStride(void);
+\end{verbatim}
+
+Sets the delay between the starts of the individual notes of a chord to
+{\it delay} beats. A delay value of 0.0 means all notes of a chord will
+start at the same time. A positive delay means the first note in the chord
+starts immediately, the next note in the chord starts {\it delay} beats
+later, the next note {\it delay * 2} beats later still, and so on. The use
+of a positive stride gives a more realistic chording. The default stride
+delay is 0.25 beats.
+
+The return value of {\it setStride} is the previous value of {\it delay}.
+
+The function {\it setStrideSlop} can be called to randomly vary the delay
+between chord notes. The single argument to {\it setStrideSlop}
+is a real number that represents seconds. Given a value of $s$, the function 
+will adjust the stride value between notes by a random value chosen
+between $-s$ and $s$.
+
+See \see{chord} for more information about chords.
+
+\subsection*{setSkipBeats, getSkipBeats, setSkipSeconds, getSkipSeconds}
+
+\begin{verbatim}
+    double setSkipBeats(double beats);
+    double getSkipBeats(void);
+    double setSkipSeconds(double seconds);
+    double getSkipSeconds(void);
+\end{verbatim}
+
+Causes the first {\it beats} of the entire output to be thrown away. Useful for
+when you are working on the interior of a track and you don't want to
+listen from the very beginning to assess your changes.
+
+The return value of {\it setSkipBeats} is the previous value of the skip.
+
+The alternate forms, {\it setSkipSeconds} and {\it getSkipSeconds}, are 
+like {\it setSkipBeats} and {\it getSkipBeats}, only the units are in seconds.
+
+\subsection*{setAmplitude, getAmplitude}
+
+\begin{verbatim}
+    double setAmplitude(double level)
+    double getAmplitude(void);
+\end{verbatim}
+
+Sets the overall amplitude of output to that of {\it level}. Returns the
+previous amplitude. The default level is 1.0 meaning the notes are output
+as read. To increase the volume of the output, choose a level greater than
+1.0. To decrease the volume, choose a non-negative level less than 1.0.
+
+The function {\it setAmplitude} returns the previous amplitude setting.
+
+\subsection*{setTempo, getTempo}
+
+\begin{verbatim}
+    int setTempo(int beatsPerMinute);
+    int getTempo(void);
+\end{verbatim}
+
+Sets the tempo of a song. The default tempo is 132 beats per minute.
+Setting the tempo with a value higher than 132 speeds up the song while
+setting the tempo to a lower value slows down the song.
+
+The return value
+of {\it setTempo} is the previous tempo setting.
+
+\subsection*{setKey, getKey}
+
+\begin{verbatim}
+    int setKey(int key);
+    int getKey(void);
+\end{verbatim}
+
+Sets the key signature of a song. The argument {\it key} is one of the
+predefined variables:
+{\bf C}, {\bf Cs}, {\bf Db}, {\bf D}, {\bf Ds}, {\bf Eb}, {\bf E}, {\bf F}, etc.
+
+See also: \see{keySignatures}.
+
+\subsection{setDrawRamp, getDrawRamp}
+
+\begin{verbatim}
+    double setDrawRamp(int double);
+    double getDrawRamp(void);
+\end{verbatim}
+
+Sets the time of transition between successive notes in a draw.
+
+See also: \see{draw}.
+
+\subsection*{beginCrescendo, endCrescendo}
+
+\begin{verbatim}
+    void beginCrescendo(double ramp);
+    void endCrescendo(void);
+\end{verbatim}
+
+These functions are always used in pairs; in between the calls,
+the songlib output steadily increases or decreases in volume depending
+on the value of {\it ramp}. Values greater than one cause an
+increase in volume; {\it ramp} values less than one cause
+a decrease in volume. A ramp value of 2 eventually 
+doubles the amplitude values
+over the span; a ramp value of 0.5 eventually halves the amplitude
+values over
+the span.
+Note: due to the non-linear nature of perceived volume,
+doubling (halving) amplitude values does not double (halve)
+the perceived volume.
+
+\subsection*{beginRitardando, endRitardando}
+
+\begin{verbatim}
+    void beginRitardando(double ramp);
+    void endRitardando(void);
+\end{verbatim}
+
+These functions are always used in pairs; in between the calls,
+the songlib output steadily increases or decreases in tempo depending
+on the value of {\it ramp}. Positive values cause a
+decrease in tempo; negative {\it ramp} values cause
+an increase in volume. When a note with length {\it b} beats is played,
+the tempo is reduced by {\it b} * {\it ramp} after the note
+concludes. When a chord is played, the tempo is decreased after the
+last note of the chord is played.
+The behavior of this function is undefined if a call to {\it backwards} is
+made in between the {\it beginRitardando} and {\it endRitardando} calls.
+
+\subsection*{setInterp, getInterp}
+
+\begin{verbatim}
+    int setInterp(int type);
+    int getInterp(void);
+\end{verbatim}
+
+The three interpolation methods available in songlib
+are linear (type 1), sinusoidal (type 2), and cubic (type 3).
+The smaller the type number, the faster and more crude the
+interpolation method. The {\it setInterp} function returns the previous
+interpolation type while the {\it getInterp} method returns the
+current type. The default type is sinusoidal.
+
+\end{document}

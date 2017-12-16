@@ -1,0 +1,92 @@
+\documentclass{article}  
+\input{header}
+
+\newcommand\ver {{1.47}}
+
+\htmltitle{Songlib: The C Library for Music Composition}
+
+\title{Songlib: The C Library for Music Composition\\
+\date{Revision Date: \today}}
+
+\author{written by: John C. Lusth}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{cygwin-install.pdf}}
+\W\htmlrule
+
+\section*{Cygwin/Windows installation instructions}
+
+First, browse to
+\xlink{www.cygwin.com}{http://www.cygwin.com} and download the current
+{\it setup.exe} and run it. Use the 64-bit version of the setup program if 
+you have a 64-bit computer.
+
+Answer all the questions using the default answers. At some point,
+you will be asked to select some packages. Click on plus signs next
+to
+
+\begin{itemize}
+\item
+    'Audio' and click on the Skip column entry next to the {\it sox} entry.
+\item
+    'Devel' and click on the Skip column entry next to the {\it gcc-core}
+    and {\it make} entries.
+\item
+    'Editors'
+    and click on the Skip labels next to the {\it vim} and {\it vim-common}
+    entries.
+\item
+    'Net'
+    and click on the Skip label next to the {\it openssh} entry.
+\item
+    'Util'
+    and click on the Skip label next to the {\it ncurses} entry.
+\item
+    'Web'
+    and click on the Skip label next to the {\it wget} entry.
+\end{itemize}
+
+Finally, click on the {\it Next} button in the lower right corner
+and continue accepting defaults.
+
+Once Cygwin is installed, open up a Cygwin terminal (an icon should
+be on your Desktop).
+Begin the songlib installation process by downloading the \songlib\ source
+tarball into a directory named {\it songlib}:
+
+\begin{verbatim}
+    mkdir ~/songlib
+    cd ~/songlib
+    wget beastie.cs.ua.edu/songlib/songlib-1.47.tgz
+\end{verbatim}
+
+Then, unpack the tarball:
+
+\begin{verbatim}
+    tar xvfz *.tgz
+\end{verbatim}
+
+Finally, build and install the library and install the utilities
+and sample note files by typing the command:
+
+\begin{verbatim}
+    make install
+\end{verbatim}
+
+while in the {\it songlib} directory.
+
+To test your installation, move into the {\it quickstart} directory and
+type {\it make play}:
+
+\begin{verbatim}
+    cd quickstart
+    make play
+\end{verbatim}
+
+You should see the song being constructed and then should hear it
+begin to play.
+
+\end{document}

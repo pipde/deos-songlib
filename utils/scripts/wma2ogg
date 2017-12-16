@@ -1,0 +1,11 @@
+#!/bin/bash
+
+for s in "$@"
+    do
+    chmod 644 "$s"
+    name=`basename "$s" .wma`
+    dir=`dirname "$s"`
+    echo converting "$s" to OGG
+    mplayer -vo null -vc dummy -af resample=44100 -ao pcm:waveheader "$s" 
+    sox audiodump.wav "$dir"/"$name".ogg
+    done

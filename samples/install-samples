@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ "$EUID" -ne 0 ]
+    then
+    echo "If the installation of samples fails, try: sudo make install"
+    fi
+
+for i in *.tgz
+    do
+    rm -f install
+    echo unpacking $i...
+    name=`basename $i .tgz`
+    mkdir -p /usr/local/share/samples/$name/
+    tar xvfz $i
+    mv *.rra /usr/local/share/samples/$name/
+    done

@@ -1,0 +1,8 @@
+Section: base
+Priority: optional
+Depends: 
+Suggests: sox
+Maintainer: John C. Lusth <lusth@cs.ua.edu>
+Description: C library for music programming
+ Songlib library is a C library for music programming.
+ See songlib.cs.ua.edu for more information.

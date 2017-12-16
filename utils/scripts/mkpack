@@ -1,0 +1,69 @@
+#!/bin/bash
+if [ $# = 0 ]
+    then
+    echo "Usage: mkpack <instrument> <base-name> <audio-files...>"
+    echo "       audio files can either be wav or rra or"
+    echo "       directories of audio files"
+    exit 0
+fi
+
+inst=$1
+shift
+base=$1
+shift
+
+echo prepping FLAC files...
+
+files=""
+for s in $*
+    do
+    if [ -d $s ]
+        then
+        (cd $s; rraprep *)
+        files=`echo $files $s/*.flac`
+    else
+        rraprep $s
+        name=`basename $s .wav`
+        if [ $s = $name ]
+            then
+            name=`basename $s .rra`
+        fi
+        files=`echo $files $name.flac`
+    fi
+    done
+
+echo files: $files
+
+echo creating install script
+
+echo echo you may be asked for your local password ...          >  install
+echo TARGET=/usr/local/share/samples/$inst/                     >> install
+echo sudo mkdir -p \$TARGET                                     >> install
+echo echo converting flac to rra...                             >> install
+echo "for i in $files; do"                                      >> install
+echo "    flac2rra \$i"                                         >> install
+echo "    where=\`dirname \$i\`"                                >> install
+echo "    name=\`basename \$i .flac\`"                          >> install
+echo "    if [ \$where = \".\" ]"                               >> install
+echo "        then"                                             >> install
+echo "        sudo cp \$name.rra \$TARGET/"                     >> install
+echo "    else"                                                 >> install
+echo "        sudo mkdir -p \$TARGET/\$where"                   >> install
+echo "        sudo cp \$where/\$name.rra \$TARGET/\$where/"     >> install
+echo "    fi"                                                   >> install
+echo "    rm \$i"                                               >> install
+echo done                                                       >> install
+echo "sudo cp *.README *.include \$TARGET/ 2> /dev/null"        >> install
+
+chmod +x install
+
+echo creating sample pack $inst-$base...
+
+if [ -e $base.include ] ; then
+    tar cvf $inst-$base.tar $files install $base.README $base.include
+else
+    tar cvf $inst-$base.tar $files install $base.README
+fi
+gzip $inst-$base.tar
+mv $inst-$base.tar.gz $inst-$base.tgz
+scp $inst-$base.tgz beastie.cs.ua.edu:/var/www/html/songlib/samples/

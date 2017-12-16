@@ -1,0 +1,551 @@
+#ifndef INCLUDED_SONGLIB_H
+#define INCLUDED_SONGLIB_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <stdbool.h>
+#include "rra.h"
+#include "key.h"
+#include "drums.h"
+#include "debug.h"
+
+#define DUMMY -2
+#define SEMITONE 1.059463094359
+#define STEP 0.059463094359
+
+#define SX ((char *) 0)
+#define IX ((int) 0)
+#define DX (0.0)
+
+#define STRUM_UP 0
+#define STRUM_DOWN 1
+
+/* notes, relative offset */
+
+/* if you change these, key.c will break! */
+
+#define C     0
+#define Cs    1
+#define Db    1
+#define D     2
+#define Ds    3
+#define Eb    3
+#define E     4
+#define F     5
+#define Fs    6
+#define Gb    6
+#define G     7
+#define Gs    8
+#define Ab    8
+#define A     9
+#define As    10
+#define Bb    10
+#define B     11
+
+/* notes, absolute offset */
+
+#define C0    0
+#define Cs0   1
+#define Db0   1
+#define D0    2
+#define Ds0   3
+#define Eb0   3
+#define E0    4
+#define F0    5
+#define Fs0   6
+#define Gb0   6
+#define G0    7
+#define Gs0   8
+#define Ab0   8
+#define A0    9
+#define As0   10
+#define Bb0   10
+#define B0    11
+#define C1    12
+#define Cs1   13
+#define Db1   13
+#define D1    14
+#define Ds1   15
+#define Eb1   15
+#define E1    16
+#define F1    17
+#define Fs1   18
+#define Gb1   18
+#define G1    19
+#define Gs1   20
+#define Ab1   20
+#define A1    21
+#define As1   22
+#define Bb1   22
+#define B1    23
+#define C2    24
+#define Cs2   25
+#define Db2   25
+#define D2    26
+#define Ds2   27
+#define Eb2   27
+#define E2    28
+#define F2    29
+#define Fs2   30
+#define Gb2   30
+#define G2    31
+#define Gs2   32
+#define Ab2   32
+#define A2    33
+#define As2   34
+#define Bb2   34
+#define B2    35
+#define C3    36
+#define Cs3   37
+#define Db3   37
+#define D3    38
+#define Ds3   39
+#define Eb3   39
+#define E3    40
+#define F3    41
+#define Fs3   42
+#define Gb3   42
+#define G3    43
+#define Gs3   44
+#define Ab3   44
+#define A3    45
+#define As3   46
+#define Bb3   46
+#define B3    47
+#define C4    48
+#define Cs4   49
+#define Db4   49
+#define D4    50
+#define Ds4   51
+#define Eb4   51
+#define E4    52
+#define F4    53
+#define Fs4   54
+#define Gb4   54
+#define G4    55
+#define Gs4   56
+#define Ab4   56
+#define A4    57
+#define As4   58
+#define Bb4   58
+#define B4    59
+
+#define C5    60
+#define Cs5   61
+#define Db5   61
+#define D5    62
+#define Ds5   63
+#define Eb5   63
+#define E5    64
+#define F5    65
+#define Fs5   66
+#define Gb5   66
+#define G5    67
+#define Gs5   68
+#define Ab5   68
+#define A5    69
+#define As5   70
+#define Bb5   70
+#define B5    71
+#define C6    72
+#define Cs6   73
+#define Db6   73
+#define D6    74
+#define Ds6   75
+#define Eb6   75
+#define E6    76
+#define F6    77
+#define Fs6   78
+#define Gb6   78
+#define G6    79
+#define Gs6   80
+#define Ab6   80
+#define A6    81
+#define As6   82
+#define Bb6   82
+#define B6    83
+#define C7    84
+#define Cs7   85
+#define Db7   85
+#define D7    86
+#define Ds7   87
+#define Eb7   87
+#define E7    88
+#define F7    89
+#define Fs7   90
+#define Gb7   90
+#define G7    91
+#define Gs7   92
+#define Ab7   92
+#define A7    93
+#define As7   94
+#define Bb7   94
+#define B7    95
+#define C8    96
+#define Cs8   97
+#define Db8   97
+#define D8    98
+#define Ds8   99
+#define Eb8   99
+#define E8    100
+#define F8    101
+#define Fs8   102
+#define Gb8   102
+#define G8    103
+#define Gs8   104
+#define Ab8   104
+#define A8    105
+#define As8   106
+#define Bb8   106
+#define B8    107
+#define C9    108
+#define Cs9   109
+#define Db9   109
+#define D9    110
+#define Ds9   111
+#define Eb9   111
+#define E9    112
+#define F9    113
+#define Fs9   114
+#define Gb9   114
+#define G9    115
+#define Gs9   116
+#define Ab9   116
+#define A9    117
+#define As9   118
+#define Bb9   118
+#define B9    119
+
+#define C10   120
+#define Cs10  121
+#define Db10  121
+#define D10   122
+#define Ds10  123
+#define Eb10  123
+#define E10   124
+#define F10   125
+#define Fs10  126
+#define Gb10  126
+#define G10   127
+#define Gs10  128
+#define Ab10  128
+#define A10   129
+#define As10  130
+#define Bb10  130
+#define B10   131
+
+#define INSTRUMENTS 40
+#define OCTAVES 11
+#define NOTES 12
+
+#define LINEAR 0
+#define EXPONENTIAL 1
+
+/* percussion constants */
+
+#define BLOCK_LOW        3
+#define BLOCK_MIDDLE     6
+#define BLOCK HIGH       9
+#define BASS_LOW	12
+#define BASS_MIDDLE	15
+#define BASS_HIGH	18
+#define CLAP		21
+#define COWBELL		24
+#define CRASH		27
+#define CRASH_ALT	30
+#define HAT_CLOSED	33
+#define HAT_OPEN	36
+#define HAT_PEDAL       39
+#define KICK            42
+#define KICK_ALT        45
+#define RIDE            48
+#define RIDE_ALT        51
+#define RIDE_BELL       54
+#define SNARE           57
+#define SNARE_ALT       60
+#define STICK           63
+#define STICKS          66
+#define TIM_LOW         69
+#define TIM_MIDDLE      72
+#define TIM_HIGH        75
+#define TOM_LOW         78
+#define TOM_MIDDLE      81
+#define TOM_HIGH        84
+#define CRASH_CHOKE     87
+#define BELL            90
+#define CHINA           93
+#define SPLASH          96
+#define TAMBOURINE      99
+#define SHAKER         102
+#define RIMSHOT        105
+#define PERC8          108
+#define PERC9          111
+#define PERC10         114
+#define PERC11         117
+#define PERC12         120
+
+#define startMeasure() measure(0,0,0)
+#define checkMeasure() measure(__FILE__,__FUNCTION__,__LINE__)
+
+extern double slopTiming;
+extern double slopAmplitude;
+extern double slopPitch;
+
+extern double T; //thirty-secondth note
+extern double S; //sixteenth note
+extern double I; //eighth note
+extern double Q; //quarter note
+extern double H; //half note
+extern double W; //whole note
+
+extern double Td; //dotted thirty-secondth note
+extern double Sd; //dotted sixteenth note
+extern double Id; //dotted eighth note
+extern double Qd; //dotted quarter note
+extern double Hd; //dotted half note
+extern double Wd; //dotted whole note
+
+extern double Tt; //triplet thirty-secondth note
+extern double St; //triplet sixteenth note
+extern double It; //triplet eighth note
+extern double Qt; //triplet quarter note
+extern double Ht; //triplet half note
+extern double Wt; //triplet whole note
+
+extern double TD; //downbeat thirty-secondth note
+extern double SD; //downbeat sixteenth note
+extern double ID; //downbeat eighth note
+extern double QD; //downbeat quarter note
+extern double HD; //downbeat half note
+extern double WD; //downbeat whole note
+
+extern double TU; //upbeat thirty-secondth note
+extern double SU; //upbeat sixteenth note
+extern double IU; //upbeat eighth note
+extern double QU; //upbeat quarter note
+extern double HU; //upbeat half note
+extern double WU; //upbeat whole note
+
+extern int capo;
+
+extern char *NoteNames[NOTES];
+
+extern void measure(const char *,const char *,const int);
+extern void startCounting(void);
+extern double stopCounting(void);
+extern void setLow(int);
+
+/******************* REQUIRED ********************/
+
+extern void songInit(void);
+extern void openOutput(char *,int,int);
+extern void closeOutput(void);
+extern void closeOutputSelection(double,double);
+
+/***************** NOTE PLAYING ******************/
+
+extern void rplay(double,RRA *);
+extern void dplay(double,int *,int,int);
+extern void splay(double,int,int,int);
+extern void snplay(double,int,int);
+extern void drone(double,int,int,int,double);
+extern void ndrone(double,int,int,double);
+extern void rdrone(double,RRA *,double);
+extern void oneshot(int *,int,int);
+
+typedef void (*PLAYER)(double,int,int,int);
+extern PLAYER play;
+extern PLAYER setPlay(PLAYER);
+
+typedef void (*NPLAYER)(double,int,int);
+extern NPLAYER nplay;
+extern NPLAYER setNPlay(NPLAYER);
+
+extern void seedChannelSelection(long);
+
+extern void drum(double,int,int);
+extern void ldrum(double,int,int);
+extern void sdrum(double,int,int);
+
+extern void chord(double,int,int,int,...);
+extern void rchord(double,...);
+extern void achord(double,int,int,int,int *,int);
+extern void anchord(double,int,int *,int);
+
+extern void guitarChord(int,int,int,int,int,double);
+extern void guitarChord2(int,int,int,int,int,double);
+extern void mandolinChord(int,int,int,double);
+extern void banjoChord(int,int,int,double);
+
+extern void bend(double,int,int,int,int,double);
+extern void nbend(double,int,int,double,double,double);
+extern void rbend(double,RRA *,double,double,double);
+extern void dbend(double,int *,int,double,double,double,int);
+
+extern void dtrill(double,int,int,int,int,int,double,double,int);
+extern void trill(double,int,int,int,int,double,double,int);
+extern void ntrill(double,int,int,int,double,double,int);
+
+extern void ddraw(double,int,int,int,int,double,...);
+extern void draw(double,int,int,int,double,...);
+extern void ndraw(double,int,int,double,...);
+extern void adraw(double,int,int,int*,int *,double *);
+
+extern void resolve(int,int,int,double,int,int,double);
+extern void nresolve(int,int,double,int,double);
+
+extern void silence(double);
+extern void rest(double);
+
+/*************** NOTE UPDATING AND RETRIEVAL ******************/
+
+extern int readScale(char *,char *);
+
+extern RRA *getNote(int,int,int);
+extern RRA *getNumberedNote(int,int);
+
+extern RRA *setNote(int,int,int,RRA *);
+extern RRA *getNote(int,int,int);
+
+extern RRA *setNumberedNote(int,int,RRA *);
+extern RRA *getNumberedNote(int,int);
+
+extern void replaceNote(int,int,int,int,int,int);
+extern void nreplaceNote(int,int,int,int);
+
+extern int isOriginalNote(int,int,int);
+extern int isOriginalNumberedNote(int,int);
+
+/************* RESAMPLING SUPPORT ****************/
+
+typedef int (*INTERP)(int *,int,double);
+extern INTERP interp;
+
+int interp1(int *,int,double);
+int interp2(int *,int,double);
+int interp3(int *,int,double);
+
+extern RRA *resample(RRA *,double);
+extern RRA *aresample(RRA *,double *,int);
+
+/******************* EFFECTS *********************/
+
+extern int setCrescendoMode(int);
+extern int getCrescendoMode(void);
+extern void beginCrescendo(double);
+extern void endCrescendo(void);
+
+#define PLAIN 0
+#define SWING 1
+
+extern void setStyle(char *,double);
+
+/******************* SETTINGS ********************/
+
+extern char *getVersion(void);
+extern int getSampleRate(void);
+extern int getBitsPerSample(void);
+extern int getBytesPerSample(void);
+extern int getSamplesWritten(void);
+extern int getSamplesGenerated(void);
+
+extern void setTime(int,int);
+extern int getBeatsPerMeasure(void);
+extern int getNoteValue(void);
+
+extern double getSustain(void);
+extern double setSustain(double);
+
+extern double getAttack(void);
+extern double setAttack(double);
+
+extern double getStride(void);
+extern double setStride(double);
+extern double setStrideSlop(double);
+
+extern double getSkipBeats(void);
+extern double setSkipBeats(double);
+
+extern double getSkipSeconds(void);
+extern double setSkipSeconds(double);
+
+extern double getSkipMeasures(void);
+extern double setSkipMeasures(double);
+
+extern double getAmplitude(void);
+extern double setAmplitude(double);
+extern double changeAmplitude(double);
+extern void louder(double);
+extern void softer(double);
+extern void slower(double);
+extern void faster(double);
+
+extern double getTempo(void);
+extern double setTempo(double);
+
+extern double getDrawRamp(void);
+extern double setDrawRamp(double);
+extern double getDrawAmpFactor(void);
+extern double setDrawAmpFactor(double);
+
+extern int getPitchShift(int);
+extern int setPitchShift(int,int);
+
+extern int setRandomChannel(int);
+extern int getRandomChannel(void);
+
+extern double setSlopTiming(double);
+extern double setSlopAmplitude(double);
+extern double setSlopPitch(double);
+
+extern double setPrimaryEmphasis(double);
+extern double getPrimaryEmphasis(void);
+extern double setSecondaryEmphasis(double);
+extern double getSecondaryEmphasis(void);
+
+extern bool setUseRandomSampling(bool);
+extern bool getUseRandomSampling(void);
+
+extern int getInterp(void);
+extern int setInterp(int);
+
+extern double getSkipAttack(void);
+extern double setSkipAttack(double);
+
+extern int getVoiceLeading(void);
+extern int setVoiceLeading(int);
+
+extern void setSeed(long);
+
+/**************** CONVERSIONS ****************/
+
+extern double beatsToSamples(double);
+extern double secondsToSamples(double);
+extern double millisecondsToSamples(double);
+extern double samplesToBeats(double);
+extern double samplesToSeconds(double);
+extern double samplesToMeasures(double);
+extern double measuresToSamples(double);
+extern double beatsToMeasures(double);
+extern double measuresToBeats(double);
+extern double beatsToSeconds(double);
+extern double secondsToBeats(double);
+
+/***************** MOVEMENTS *****************/
+
+extern double backwards(double);
+extern double forwards(double);
+extern double moveTo(double,double);
+extern int setLocation(int);
+extern int getLocation(void);
+
+/*************** MISCELLANEOUS ***************/
+
+extern int flip(void);
+extern double randomRange(double,double);
+extern void addComment(char *);
+extern void writeCommentsRRA();
+extern void closeComments();
+
+#endif /* INCLUDED_SONGLIB_H */

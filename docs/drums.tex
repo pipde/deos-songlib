@@ -1,0 +1,361 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{Songlib: drums}
+
+\title{Songlib: drums\\
+\date{Revision Date: \today}}
+
+\author{written by: Song Li Buser}
+
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{drums.pdf}}
+\W\htmlrule
+
+\section*{Drum support}
+
+\Songlib\ provides three approaches beyond the play/splay/drum set of
+functions. They are {\it drumline}, whereby you play a set of predefined
+patterns, {\it drumkit}, whereby you provide separate patterns that are
+played by each instrument in the drumkit, and {\it processtab}, whereby
+you specify a grand pattern describing all instruments that is
+subsequently converted into \songlib\ code.
+The {\it drumline} approach is the simplest but least versatile,
+while the {\it processtab} approach allows more creativity
+but requires no programming.
+The {\it drumkit} approach lies allows creativity, but requires
+programming.
+
+\section*{Drumline}
+
+The {\it drumline} approach utilizes the
+{\it drumline} function, which plays predefined patterns supplied in
+the function call.
+The function utilizes a single sample pack which holds single hits on 
+various percussive instruments, according to the drumset standard
+(see \xlink{noteNotations.html}{noteNotations.html}).
+
+Here is an example
+call to {\it drumline}:
+
+\begin{verbatim}
+    drumset = readScale("/usr/local/samples/share/drumset/","hera_");
+    drumline(4,drumset,d44c,0);
+\end{verbatim}
+
+The first argument to {\it drumline} is the number of measures you wish the
+drumset instruments to be played.
+In the example, the instruments are to be played for 4
+measures. The second is the instrument scale do be used.
+The third argument is the pattern
+to be used. Currently there are nine patterns:
+
+\begin{itemize}
+\item d44a
+\item d44b
+\item d44c
+\item d44d
+\item d44e
+\item d44f
+\item d44g 
+\item d44h 
+\item d44i 
+\end{itemize}
+
+All patterns starting with `d44' will each span one measure in
+4:4 time. Eventually, there will be d34, and d68 patterns as well.
+
+The last argument to {\it drumline} is
+the pattern to play for the last measure, if you
+wish to have a different pattern for the last measure. If a zero is
+passed the third argument is used for the last measure ({\it i.e}.,
+all measures
+are the same pattern).
+
+If you wish, you can write your own patterns to send to {\it drumline}.
+The patterns you send to {\it drumline} should look something like:
+
+\begin{verbatim}
+    void 
+    pattern(int drumset)
+        {
+        ...
+        }
+\end{verbatim}
+
+For example patterns, see:
+
+\begin{verbatim}
+    ~/songlib/lib/drumlines.c
+\end{verbatim}
+
+The following pattern demonstrates how to have the pattern change
+from one measure to the next:
+
+\begin{verbatim}
+    void
+    d44a(int drumset)
+        {
+        int totalMeasures = 2;
+        static int mode = 0;
+
+        if (drumset < 0)
+            {
+            mode = 0;
+            return;
+            }
+
+        switch (mode)
+            {
+            case 0:
+            drum(I,drumset,TOM_MIDDLE);
+            drum(Qd,drumset,TOM_MIDDLE);
+            drum(H,drumset,TOM_LOW);
+            break;
+            case 1:
+            drum(H,drumset,TOM_LOW);
+            drum(I,drumset,TOM_LOW);
+            drum(Qd,drumset,TOM_MIDDLE);
+            break;
+            //add more measures/cases here
+            }
+
+        mode = (mode + 1) % totalMeasures;
+        }
+\end{verbatim}
+
+Note that sending a nonsensical drumset (e.g. -1) resets
+the pattern back to the beginning. Otherwise, subsequent calls cycle
+through the total number of measures
+
+\section*{Drumkit}
+
+The {\it drumkit} approach utilizes the following set of function:
+
+\begin{itemize}
+\item
+    {\it drumkitCrash}
+\item
+    {\it drumkitHHOpen}
+\item
+    {\it drumkitHHClosed}
+\item
+    {\it drumkitHHPedal}
+\item
+    {\it drumkitRide}
+\item
+    {\it drumkitSnare}
+\item
+    {\it drumkitTom}
+\item
+    {\it drumkitTomHi}
+\item
+    {\it drumkitTomLo}
+\item
+    {\it drumkitKick}
+\item
+    {\it drumkitRim}
+\item
+    {\it drumkitStick}
+\item
+    {\it drumkitCowbell}
+\end{itemize}
+
+An example call to {\it drumkitHHPedal} might look like:
+
+\begin{verbatim}
+    drumkitHHPedal(10,0.75,"-x-x-x-x-x-x-x-x","xxxx",(char *) 0);
+\end{verbatim}
+
+The first argument is the number of repeats. In this case,
+the supplied patterns will be repeated 10 times.
+The second argument is the amplitude. In the example, the
+amplitude is being set to three-quarters value. The next
+arguments are the patterns to be played by the instrument;
+patterns are terminated with a zero. Each pattern corresponds
+to a measure and the length of the pattern specifies the number
+of beats in the measure. For example, the pattern:
+
+\begin{verbatim}
+    "-x-x-x-x-x-x-x-x"
+\end{verbatim}
+
+says that the instrument should be played using sixteenth notes.
+A \verb!'x'! in the pattern means the instrument is to be played,
+while a \verb!'-'! in the pattern indicates a rest. The pattern
+
+\begin{verbatim}
+    "x--x"
+\end{verbatim}
+
+means the instrument should be played using quarter notes with pattern
+``{\it hit} {\it rest} {\it rest} {\it hit}''. All the other drumkit
+functions work in a similar fashion.
+
+Note, the entire pattern set is played before the set is repeated.
+
+Here is an example of a 10 measure rock-n-roll beat:
+
+\begin{verbatim}
+    drumkitStick(1,1,"xxxx",(char *) 0); //intro
+    spot = getLocation();
+    drumkitCowbell(10,1,"g-g-g-g-g-g-g-g-",(char *) 0); setLocation(spot);
+    drumkitKick   (10,1,"x---x---x---x---",(char *) 0); setLocation(spot);
+    drumkitSnare  (10,1,"----x-------x---",(char *) 0); setLocation(spot);
+    drumkitHHPedal(10,1,"--x---x---x---x-",(char *) 0); setLocation(spot);
+    drumkitRim    (10,1,"---x-----x-----x",(char *) 0); setLocation(spot);
+    drumkitTomHi  (10,1,"x---x-----x---x-",(char *) 0); setLocation(spot);
+    drumkitTom    (10,1,"-------x--------",(char *) 0); setLocation(spot);
+    drumkitTomLo  (10,1,"-x------x--x----",(char *) 0); 
+\end{verbatim}
+
+In a pattern, only certain characters are significant; any other character
+is considered a rest. Thus, the following two patterns are
+equivalent:
+
+\begin{verbatim}
+    "x---x-----x---x-"
+    "x234x23412x412x4"
+\end{verbatim}
+
+You may prefer the latter formatting for patterns.
+
+The default drumkit should have been installed when you installed
+\songlib.
+If you wish to use different instruments than those in the default drumkit,
+you can get and set each instrument individually with the following functions:
+
+\begin{itemize}
+\item
+    {\it getCrash}
+    and {\it setCrash}
+\item
+    {\it getHHOpen}
+    and {\it setHHOpen}
+\item
+    {\it getHHClosed}
+    and {\it setHHClosed}
+\item
+    {\it getHHPedal}
+    and {\it setHHPedal}
+\item
+    {\it getSnare}
+    and {\it setSnare}
+\item
+    {\it getTomHi}
+    and {\it setTomHi}
+\item
+    {\it getTom}
+    and {\it setTom}
+\item
+    {\it getTomLo}
+    and {\it setTomLo}
+\item
+    {\it getKick}
+    and {\it setKick}
+\item
+    {\it getRim}
+    and {\it setRim}
+\item
+    {\it getStick}
+    and {\it setStick}
+\item
+    {\it getCowbell}
+    and {\it setCowbell}
+\end{itemize}
+    
+All of these functions behave similarly; here is an example call to
+{\it setCrash}:
+
+\begin{verbatim}
+    inst = readScale("/usr/local/share/samples/mydrumkit/","crash_");
+    oldCrash = setCrash(inst);
+\end{verbatim}
+
+Note, the {\it drumkit} function assumes that there are exactly 11 samples
+in each instrument sample pack, located at notes 0, 12, 24, 36, 48, 60, 72, 84,
+96, 108, and 120. Things will go badly if this is not the case for
+your custom drumkit.
+
+\subsection*{Other drumkit functions}
+
+For your convenience, there is a generic form of the drumkit functions:
+
+\begin{verbatim}
+    drumPat(instrument,amplitude,repeats,pattern1,...,patternN,(char *) 0);
+\end{verbatim}
+
+With {\it drumPat}, the instrument is passed in as the first argument.
+The {\it roll} function can be used to generate a drum roll:
+
+\begin{verbatim}
+    roll(duration,instrument);
+\end{verbatim}
+
+The speed of the roll is set with the {\it setRollSpeed} function;
+the default speed is a $32^{nd}$ note, meaning
+each hit in a roll lasts $\frac{1}{32}$ of a beat.
+A periodic emphasis can be added with the {\it setRollEmphasis} function;
+the default emphasis is 4, meaning every fourth hit is a little louder
+than the others.
+
+Three more functions in the drumkit family are:
+
+\begin{verbatim}
+    ghost(duration,instrument);
+    flam(duration,instrument,emphasis);
+    drag(duration,instrument,emphasis);
+\end{verbatim}
+
+The {\it ghost} function plays a very quiet hit.
+The {\it flam} function adds a softer grace note before the main hit. 
+The {\it emphasis} argument dictates how much of an accent is given to
+the main hit. A value greater than one makes the main note louder,
+while a value less than one makes the main note softer.
+The {\it drag} function is similar to {\it flam}, except two grace notes precede
+the main hit.
+
+As with all other drumkit functions,
+the instrument passed to {\it drumPat}, {\it roll}, and {\it grace},
+would have an eleven note sample set with the
+notes occurring at multiples of 12.
+
+\subsection*{Pattern characters}
+
+As indicated above, an 'x' in the pattern indicates a hit and a '-' indicates
+a rest. Here is a list of all the special characters that can be placed in
+a pattern:
+
+\begin{center}
+\begin{tabular}{ll}%%
+\verb!x! & a regular hit \\
+\verb!X! & an emphasized hit \\
+\verb!g! & a ghost note \\
+\verb!G! & a ghostier note \\
+\verb!r! & a roll \\
+\verb!R! & an emphasized roll \\
+\verb!f! & a flam (one ghost note) \\
+\verb!F! & an emphasized flam \\
+\verb!d! & a drag (two ghost notes) \\
+\verb!D! & an emphasized drag \\
+\verb!^! & regular hit, one semitone higher \\
+\verb!A! & emphasized hit, one semitone higher \\
+\verb!v! & regular hit, one semitone lower \\
+\verb!V! & emphasized hit, one semitone lower \\
+\end{tabular}
+\end{center}
+
+As stated earlier, any character not appearing in the above table is
+treated as a rest.
+
+\section*{Processtab}
+
+One can generate \songlib\ programs using a text description similar to
+the patterns used by the {\it drumkit} approach. See \xlink{tab}{tab.html}
+for more information.
+
+\end{document}

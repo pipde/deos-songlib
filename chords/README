@@ -1,0 +1,9 @@
+You need to install the drums-sweet and guitar-electric-cleanstrat
+sample packs:
+
+     mkdir temp
+     cd temp
+     getpack drums-sweet
+     rm *.rra
+     getpack guitar-electric-cleanstrat
+     rm *.rra

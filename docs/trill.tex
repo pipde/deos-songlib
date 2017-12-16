@@ -1,0 +1,48 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{songlib: trill}
+
+\title{Songlib: trill\\
+\date{Revision Date: \today}}
+
+\author{John C. Lusth}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{trill.pdf}}
+\W\htmlrule
+
+The {\it trill} family of functions is used to play notes
+with trill (a cyclical varying of pitch at the end
+of a note). The {\it trill} family follows the \{n,r,d\} convention.
+
+\begin{verbatim}
+void trill(double beats,int, instrument,int octave,int pitch,
+    double startBeats,double delta,double down,double up,int count);
+
+void ntrill(double beats,int instrument,int numberedNote,
+    double startBeats,double delta,double down,double up,int count);
+
+void rtrill(double beats,RRA *r,
+    double startBeats,double delta,double down,double up,int count);
+
+void dtrill(double beats,int *data,int length,
+    double startBeats,double delta,double down,double up,int count);
+\end{verbatim}
+
+The note plays for {\it startBeats} and then oscillates 'count' times
+around {\it down} and {\it up}.  Each down phase lasts {\it delta} beats and
+each up phase lasts {\it delta} beats.
+{\it Down} and {\it up} are specified as offsets.
+For example, if the specified note is C3,
+{\it down} is -STEP and {\it up} is STEP,
+then the note will start at C3 and then oscillate between B2 and Cs3.
+
+A trill is usually considered a rapid alternation between
+adjacent notes; the trill function provides more generality
+than that.
+
+\end{document}

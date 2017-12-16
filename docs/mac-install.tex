@@ -1,0 +1,98 @@
+\documentclass{article}  
+\input{header}
+
+\newcommand\ver {{1.47}}
+
+\htmltitle{Songlib: The C Library for Music Composition}
+
+\title{Songlib: The C Library for Music Composition\\
+\date{Revision Date: \today}}
+
+\author{written by: John C. Lusth}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{mac-install.pdf}}
+\W\htmlrule
+
+\section*{Mac installation instructions}
+
+Begin the installation process by downloading the \songlib\ source
+tarball into a directory named {\it songlib}:
+
+\begin{verbatim}
+    mkdir ~/songlib
+    cd ~/songlib
+    curl -O beastie.cs.ua.edu/songlib/songlib-1.47.tgz
+\end{verbatim}
+
+Then, unpack the tarball:
+
+\begin{verbatim}
+    tar xvfz *.tgz
+\end{verbatim}
+
+If \verb!/usr/local/bin/! is not in your path, then you
+should add it. See the web for instructions on how to add
+a directory to the \verb!PATH! environment variable.
+
+Create the \verb!/usr/local/bin/! directory, if it doesn't already exist:
+
+\begin{verbatim}
+   sudo mkdir -p /usr/local/bin/
+\end{verbatim}
+
+Move into the {\it songlib} directory and then
+into {\it mac} directory and install {\it wget}:
+
+\begin{verbatim}
+    cd ~/songlib/mac
+    chmod +x wget
+    sudo cp wget /usr/local/bin
+\end{verbatim}
+
+If you want to use additional songlib instrument sample packs,
+install {\it flac}:
+
+\begin{verbatim}
+    cd ~/songlib/mac
+    open flac-1.2.1.dmg
+\end{verbatim}
+
+Open up the {\it flac} folder on your desktop, double click on the installation
+icon, and follow the instructions.
+
+At the bottom of the file \verb!~/.bash_profile!, add the lines:
+
+\begin{verbatim}
+    export WAVPLAYER=afplay
+    export PATH=~/bin:/usr/local/bin:$PATH:.
+\end{verbatim}
+
+Log out of your computer and log in again
+for these changes to go into effect.
+
+Finally, build and install the library, build and install the utilities,
+and install the default sample note files by typing the command:
+
+\begin{verbatim}
+    sudo make install
+\end{verbatim}
+
+while in the {\it songlib} directory.
+
+To test your installation, move into the {\it quickstart} directory and
+type {\it make play}:
+
+\begin{verbatim}
+    cd quickstart
+    make
+    make play
+\end{verbatim}
+
+You should see the song being constructed and then should hear it
+begin to play.
+
+\end{document}

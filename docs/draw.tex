@@ -1,0 +1,126 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{Songlib: draw}
+
+\title{Songlib: draw\\
+\date{Revision Date: \today}}
+
+\author{John C. Lusth}
+
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{draw.pdf}}
+\W\htmlrule
+
+The {\it draw} family of functions is used to smoothly play multiple notes
+from a single sample. The intent is to play multiple notes as does
+a violinist when changing the fingering on the neck of the
+violin during a
+a single draw of the bow.
+
+\begin{verbatim}
+void draw(double beats,int instrument,int octave,int pitch,double length,...,(int) 0);
+
+void ndraw(double beats,int instrument,int numberedNote,double length,...,(int) 0);
+
+void adraw(double beats,int instrument,int count,int *octaves,int * pitches,double *lengths);
+\end{verbatim}
+
+The {\it draw} function is a variadic function for playing multiple notes
+from a single sample.
+The sample is given by the instrument and the first triple
+({\it instrument} and {\it octave},{\it pitch}, and {\it length}).
+The variadic part contains
+a series of ({\it octave},{\it pitch},{\it length}) triplets that
+designate the subsequent notes and durations to be resampled from the
+given sample. The variadic part is terminated by a zero.
+Since subsequent notes 
+start playing where the previous note left off in the
+given sample, the transition does not produce any
+discontinuites. 
+
+The {\it draw} function is normally used when the notes have a distinctive
+attack and the attack is not desired for short subsequent notes.
+
+For example, this use of draw plays a little trill:
+
+\begin{verbatim}
+    draw(W,recorder,
+        4,C,Q,
+        4,D,Q,
+        4,C,I,
+        4,D,I,
+        4,C,I,
+        4,D,I,
+        4,C,Q,
+        (int) 0
+        );
+\end{verbatim}
+
+The last triplet designates the pitch that is used of fill out the
+total number of beats.
+If there isn't enough data in the original sample, silence is played.
+
+The {\it ndraw} function is similar to {\it draw} but takes numbered notes
+instead of octave/pitch pairs. The variadic part
+consists of {\it int numberedNote} and {\it double length}) pairs.
+
+The example call to {\it draw} above could be equivalently rendered as:
+
+\begin{verbatim}
+    ndraw(recorder,
+        C4,Q,
+        D4,Q,
+        C4,I,
+        D4,I,
+        C4,I,
+        D4,I,
+        C4,Q,
+        (int) 0
+        );
+\end{verbatim}
+
+Both {\it draw} and {\it ndraw} are wrapper functions for {\it adraw}.
+The {\it adraw} function takes three parallel arrays of size {\it count}.
+These arrays are filled with octave/pitch/length triplets.
+
+There are also two convenient wrapper functions for {\it draw} when the goal
+is to play two notes:
+
+\begin{verbatim}
+void resolve(int instrument,
+    int firstOctave,int firstPitch,double firstBeats,
+    int secondOctave,int secondPitch,double secondBeats);
+
+void nresolve(int instrument,
+    int firstNumberedNote,double firstBeats,
+    int secondNumberedNote,double secondBeats);
+\end{verbatim}
+
+The following two calls are equivalent:
+
+\begin{verbatim}
+    resolve(W,violin,3,C,Q,3,D);
+    draw(W,violin,3,D,0.0,3,C,Q,D3,W,(int) 0);
+\end{verbatim}
+
+\section*{Transitions between notes}
+
+The transistions between notes within the {\it draw} family is controlled
+by the variable {\it drawRamp}. The {\it drawRamp} setting specifies the number
+of seconds it takes for a preceding note to slide into the following
+note, using a linear ramp. The default setting of {\it drawRamp} is 0.25
+seconds. You can get and set the {\it drawRamp} with the functions:
+
+\begin{verbatim}
+    double setDrawRamp(double seconds)
+    double getDrawRamp(void)
+\end{verbatim}
+
+See also:
+\xlink{playingNotes}{notePlaying.html},
+\end{document}

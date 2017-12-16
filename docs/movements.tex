@@ -1,0 +1,72 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{songlib: movements withing a song}
+
+\title{Songlib: movements within a song\\
+\date{Revision Date: \today}}
+
+\author{written by: Song Li Buser}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{movements.pdf}}
+\W\htmlrule
+
+\section*{Moving forwards and backwards in time}
+
+Songlib keeps track of the current location in the track
+being generated. When a note is played, the amplitude
+data is added to the output starting at the current location.
+After the note is played, the current location is moved
+forward so that the next note played will follow sequentially
+the just played note.
+
+It is possible to move forwards into the track being generated
+without playing any notes. It also is possible to move
+backwards as well, so that notes can be overlapped: 
+
+\begin{verbatim}
+    double forwards(double beats);
+    double backwards(double beats);
+\end{verbatim}
+
+The {\it forwards} function moves the current location ahead the given
+number of beats while the backwards function moves the current location
+in the opposite direction.
+Both functions return the previous location (specified as the number
+of beats since the beginning).
+
+The forwards and backwards make a move relative to the current location.
+It is also possible to move to an absolute location in the track,
+with the location specified by the number of samples into the track:
+
+\begin{verbatim}
+    int setLocation(int samples);
+    int getLocation(void);
+\end{verbatim}
+
+The {\it setLocation} function returns the previous current location.
+If you wish to move {\it x} beats into the track, use the call:
+
+\begin{verbatim}
+    setLocation(beatsToSamples(y));
+\end{verbatim}
+
+If you wish to move {\it x} minutes and {\it y} seconds into the track,
+use either of the calls:
+
+\begin{verbatim}
+    moveTo(x,y);
+    setLocation(secondsToSamples(x*60+y));
+\end{verbatim}
+
+The {\it moveTo} function returns the current location in the track in seconds
+(prior to the move), while the second call returns that location in samples.
+
+See also:
+\see{keepingTime},
+\see{controlFunctions}
+\end{document}

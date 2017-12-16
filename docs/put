@@ -1,0 +1,8 @@
+for i in $*
+    do
+    name=`basename $i .tex`
+    pdflatex $name.tex
+    hyperlatex $name.tex
+    fix $name.html
+    scp lusth.css $name.tex $name.pdf $name.html beastie.cs.ua.edu:/var/www/html/songlib/
+    done

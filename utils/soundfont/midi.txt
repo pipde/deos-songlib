@@ -1,0 +1,82 @@
+
+Prog#   Instrument            Prog#    Instrument
+ 
+PIANO                           CHROMATIC PERCUSSION
+  0    Acoustic Grand            8   Celesta
+  1    Bright Acoustic           9   Glockenspiel
+  2    Electric Grand           10   Music Box
+  3    Honky-Tonk               11   Vibraphone
+  4    Electric Piano 1         12   Marimba
+  5    Electric Piano 2         13   Xylophone
+  6    Harpsichord              14   Tubular Bells
+  7    Clavinet                 15   Dulcimer
+  
+ORGAN                          GUITAR
+ 16   Drawbar Organ             24   Nylon String Guitar
+ 17   Percussive Organ          25   Steel String Guitar
+ 18   Rock Organ                26   Electric Jazz Guitar
+ 19   Church Organ              27   Electric Clean Guitar
+ 20   Reed Organ                28   Electric Muted Guitar
+ 21   Accoridan                 29   Overdriven Guitar
+ 22   Harmonica                 30   Distortion Guitar
+ 23   Tango Accordian           31   Guitar Harmonics
+
+BASS                           SOLO STRINGS
+ 32   Acoustic Bass             40   Violin
+ 33   Electric Bass(finger)     41   Viola
+ 34   Electric Bass(pick)       42   Cello
+ 35   Fretless Bass             43   Contrabass
+ 36   Slap Bass 0               44   Tremolo Strings
+ 37   Slap Bass 1               45   Pizzicato Strings
+ 38   Synth Bass 0              46   Orchestral Strings
+ 39   Synth Bass 1              47   Timpani
+
+ENSEMBLE                       BRASS
+ 48   String Ensemble 0         56   Trumpet
+ 49   String Ensemble 1         57   Trombone
+ 50   SynthStrings 0            58   Tuba
+ 51   SynthStrings 1            59   Muted Trumpet
+ 52   Choir Aahs                60   French Horn
+ 53   Voice Oohs                61   Brass Section
+ 54   Synth Voice               62   SynthBrass 0
+ 55   Orchestra Hit             63   SynthBrass 1
+
+REED                           PIPE
+ 64   Soprano Sax               72   Piccolo
+ 65   Alto Sax                  73   Flute
+ 66   Tenor Sax                 74   Recorder
+ 67   Baritone Sax              75   Pan Flute
+ 68   Oboe                      76   Blown Bottle
+ 69   English Horn              77   Skakuhachi
+ 70   Bassoon                   78   Whistle
+ 71   Clarinet                  79   Ocarina
+
+SYNTH LEAD                     SYNTH PAD
+ 80   Lead 0 (square)           88   Pad 0 (new age)
+ 81   Lead 1 (sawtooth)         89   Pad 1 (warm)
+ 82   Lead 2 (calliope)         90   Pad 2 (polysynth)
+ 83   Lead 3 (chiff)            91   Pad 3 (choir)
+ 84   Lead 4 (charang)          92   Pad 4 (bowed)
+ 85   Lead 5 (voice)            93   Pad 5 (metallic)
+ 86   Lead 6 (fifths)           94   Pad 6 (halo)
+ 87   Lead 7 (bass+lead)        95   Pad 7 (sweep)
+
+SYNTH EFFECTS                  ETHNIC
+ 96  FX 0 (rain)               104   Sitar
+ 97  FX 1 (soundtrack)         105   Banjo
+ 98  FX 2 (crystal)            106   Shamisen
+ 99  FX 3 (atmosphere)         107   Koto
+100  FX 4 (brightness)         108   Kalimba
+101  FX 5 (goblins)            109   Bagpipe
+102  FX 6 (echoes)             110   Fiddle
+103  FX 7 (sci-fi)             111   Shanai
+
+PERCUSSIVE                     SOUND EFFECTS
+112  Tinkle Bell               120   Guitar Fret Noise
+113  Agogo                     121   Breath Noise
+114  Steel Drums               122   Seashore
+115  Woodblock                 123   Bird Tweet
+116  Taiko Drum                124   Telephone Ring
+117  Melodic Tom               125   Helicopter
+118  Synth Drum                126   Applause
+119  Reverse Cymbal            127   Gunshot

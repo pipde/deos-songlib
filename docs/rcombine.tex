@@ -1,0 +1,128 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{songlib: rcombine and runcombine}
+
+\title{songlib: rcombine and runcombine\\
+\date{Revision Date: \today}}
+
+\author{Colin B}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{rcombine.pdf}}
+\W\htmlrule
+
+The {\it rcombine} utiltiy is designed to layer multiple RRA files into a single
+multi-channeled file.  Multi-channeled input files will have all of their 
+layers added, this allows you to rcombine new replicant notes onto ones
+that have been previously joined together with {\it rcombine}.
+See documentation
+on
+\seed{randomChannel}{random channel selection} for more information.
+
+\begin{description}
+
+\item[syntax]
+
+\begin{verbatim}
+rcombine [-s] inputfile1 inputfile2 ... inputfileN outputfile
+\end{verbatim}
+
+\item[options]
+
+The -{\it s}
+option activateas silent mode and keeps rcombine from reporting anything back
+while it is working.
+
+\item[inputs]
+
+At least 2 input files are required.
+
+\item[output]
+
+The last argument to {\it rcombine} is the file name
+to save the new combined RRA file to;
+use '-' to have {\it rcombine} print to {\it stdout}.
+
+\end{description}
+
+The {\it runcombine} utiltiy is designed to seperate multi-channeled RRA files 
+back into single channeled files.  You can specify a new name for the
+output files if you don't want to have it based of the original filename
+and can optionally have {\it runcombine} remove the extra data created at the
+end of shorter samples when they are joined with longer ones with the
+{\it rcombine} utility.
+
+\begin{description}
+
+\item[syntax]
+
+\begin{verbatim}
+runcombine [-s -t -n (name)] inputfile1 [inputfile2...inputfileN]
+\end{verbatim}
+
+\item[options]
+
+The -{\it s}
+option activates silent mode and keeps rcombine from reporting anything back
+while it is working.
+
+The -{\it t} option
+activates the trim mode which shortens each output file to trim off 
+any duplicate data used to pad the file when they were joined together.
+
+The -{\it n} {\it name} option
+allows you to set a different name to be used as the basis for the
+output file names.
+
+\item[inputs]
+
+The input file names are the file to separate.
+You must specify at least one input file. If more than
+one file is given, the same basename will be used for all files created 
+and the numbering will continue across all tracks.
+
+\item[output]
+
+Each track from the collection of input files will be stored in
+a separate RRA file.
+
+\item[examples]
+
+Assuming {\it sample.rra} is a 4 channel RRA file, {\it runcombine} would have this
+type of results:
+
+\begin{verbatim}
+    runcombine sample.rra   
+\end{verbatim}
+
+Files {\it sample00.rra}, {\it sample01.rra}, {\it sample02.rra}, and
+{\it sample03.rra}
+are generated.
+
+\begin{verbatim}
+    runcombine -n note_ sample.rra   
+\end{verbatim}
+Files {\it note\_00.rra}, {\it note\_01.rra}, {\it note\_02.rra}, and
+{\it note\_03.rra}
+are generated.
+
+the file numbering matches the original channel numbers that the data
+contained in that file was found in!
+
+In the following example, both rra input files have 2 channls:
+
+\begin{verbatim}
+    runcombine sampleA.rra sampleB.rra 
+\end{verbatim}
+
+Files {\it sampleA00.rra}, {\it sampleA01.rra}, {\it sampleA02.rra}, and
+{\it sampleA03.rra}
+are generated.
+
+\end{description}
+
+\end{document}

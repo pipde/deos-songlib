@@ -1,0 +1,3 @@
+wget beastie.cs.ua.edu/songlib/samples/$1.tgz
+tar xvzf $1.tgz
+./install

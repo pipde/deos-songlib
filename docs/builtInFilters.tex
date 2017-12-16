@@ -1,0 +1,177 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{Songlib: built-in filters}
+
+\title{Songlib: built-in filters
+\date{Revision Date: \today}}
+
+\author{Song Li Buser}
+
+\date{Revision Date: \today}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{builtInFilters.pdf}}
+\W\htmlrule
+
+The following filters come with the {\it\bf songlib} system. For information
+on how to use them, see
+\see{filters}.
+
+\htmlrule
+
+Funtion: 
+
+\begin{verbatim}
+void lowPass(int *data,int length,double frequency,double resonance);
+\end{verbatim}
+
+This filter removes the higher frequencies from the audio data.
+Frequencies above the given \emph{frequency} are severely attenuated.
+According to the
+\xlink
+{http://www.musicdsp.org}
+{http://www.musicdsp.org}
+website, the \emph{resonance}
+parameter should be between $\mathrm{sqrt}(2)$ (lowest resonance)
+to 0.1 (highest resonance),
+assuming \emph{frequency} is greater than three or four
+kilohertz. For more info on acoustic resonance, see
+\xlink
+{http://en.wikipedia.org/wiki/Acoustic\_resonance}
+{http://en.wikipedia.org/wiki/Acoustic\_resonance}.
+
+4000 : the 1kHz - 4kHz mid frequency band is where the human ear is most
+sensitive
+
+1.414 : the square root of 2 (1.414) is the ratio between the average and
+peak values of a sine wave
+
+\htmlrule
+
+Function:
+
+\begin{verbatim}
+   void highPass(int *data,int length,double frequency,double resonance);
+\end{verbatim}
+
+Like \emph{lowPass} but attenuates frequencies below the given \emph{frequency}.
+
+\htmlrule
+
+Function:
+
+\begin{verbatim}
+    void amplify(int *data,int length,double amp);
+\end{verbatim}
+
+This filters scales all the values in \emph{data} by \emph{amp}. If \emph{amp}
+is greater than one, the effect will be to increase the volume.
+Conversely, a value less than one will decrease the volume.
+
+\htmlrule
+
+Function:
+
+\begin{verbatim}
+    void attackLinear(int *data,int length,double amp,double delta)
+\color{black}
+
+There are two important cases for this filter. The first case is:
+
+\begin{verbatim}
+    amp < 1 and delta > 0
+\end{verbatim}
+
+This softens the first part of the note. Sample i is scaled thusly:
+
+\begin{verbatim}
+    if (amp + delta * i < 1)
+	i = i * (amp + delta * i);
+\end{verbatim}
+
+The first sample is scaled the most, the second a little less, the
+third, a little less yet, and so on.
+
+The other important case is:
+
+\begin{verbatim}
+    amp > 1 and delta < 0
+\end{verbatim}
+
+This increases the loundess of the first part of the note.
+Sample \emph{i} is scaled thusly:
+
+\begin{verbatim}
+    if (amp + delta * i > 1)
+	i = i * (amp + delta * i);
+\end{verbatim}
+
+Here are two typical calls:
+
+\begin{verbatim}
+    attackLinear(data,length,0.5,0.0002);
+
+    attackLinear(data,length,1.5,-0.0002);
+\end{verbatim}
+
+\htmlrule
+
+Function:
+
+\begin{verbatim}
+    void attackExponential(int *data,int length,double amp,double delta);
+\end{verbatim}
+
+Like \emph{attackLinear} only the ramp is exponential.
+Sample \emph{i} is scaled
+as follows:
+
+\begin{verbatim}
+    i = i * amp * pow(delta,i);
+\end{verbatim}
+
+Here are two typical calls:
+
+\begin{verbatim}
+    attackExponential(data,length,0.5,0.100075);
+
+    attackExponential(data,length,1.5,0.99995);
+\end{verbatim}
+
+\htmlrule
+
+Function:
+
+\begin{verbatim}
+    void diminishLinear(int *data,int length,int offset,double delta);
+
+    void diminishExponential(int *data,int length,int offset,double factor);
+\end{verbatim}
+
+Like the attack filters, but works on the end of the data rather than
+the beginning. Sample \emph{i} is updated thusly:
+
+\begin{verbatim}
+    i = i * (1 + delta * i);  //linear
+
+    i = i * pow(factor,i);    //exponential
+\end{verbatim}
+
+\htmlrule
+
+Function:
+
+\begin{verbatim}
+    distort1(int *data,int length,int cutoff);
+
+    distort2(int *data,int length,int cutoff);
+
+    distort3(int *data,int length,int cutoff,double level);
+\end{verbatim}
+
+Three filters for adding distortion.
+\end{document}

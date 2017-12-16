@@ -1,0 +1,11 @@
+#!/bin/bash
+#cannot run from a pipe
+
+for s in "$@"
+    do
+    chmod 644 "$s"
+    name=`basename "$s" .rra`
+    echo converting $name.rra to $name.mp3
+    dir=`dirname "$s"`
+    rra2wav "$s" | lame - - > "$dir"/"$name".mp3
+    done

@@ -1,0 +1,135 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{Songlib: processing vocals}
+
+\title{Songlib: processing filters\\
+\date{Revision Date: \today}}
+
+\author{written by: Song Li Buser}
+
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{vocals.pdf}}
+\W\htmlrule
+
+\section*{Processing vocals}
+
+This page gives a recipe for producing a rich sounding vocal track using
+\songlib\ and {\it Audacity}.
+
+\section*{Record multiple takes}
+
+Using whatever recording software you like, record multiple takes of
+your vocals. One way is to use the {\it record} program that comes with
+\Songlib. Instructions can be found near the bottom of the \Songlib\ 
+homepage. Another is Audacity.
+
+However you record, save each take as a wave file. We will assume those
+takes are named:
+
+\begin{verbatim}
+    take1.wav take2.wav take3.wav ...
+\end{verbatim}
+
+\section*{Cleaning up the dead air}
+
+Often, there is a slight amount of noise in your recordings even when
+you are not singing. Use the {\it rrasilence} filter to clean up your takes.
+For example, to clean up {\it take1.wav}, you would run the command:
+
+\begin{verbatim}
+    wav2rra take1.wav | rrasilence | rra2wav > clean1.wav
+\end{verbatim}
+
+The {\it rrasilence} filter forces quiet sections of your vocals down to
+absolute zero volume. To make the filter more or less aggressive,
+see its options:
+
+\begin{verbatim}
+    silence -h
+\end{verbatim}
+
+\section*{Compressing your vocals}
+
+Open up Audacity and import your mastered instrument track (you will
+need to convert it WAV first) as an audio track.
+In addition, import two of your clean WAV files and save your project.
+Select all the tracks and the select the Compressor from the Effects
+menu. Run the compressor to make the loudest parts of your vocals
+no so loud.
+
+\section*{Picking the best phrases}
+
+Using the Time Shift Tool (double-headed horizontal arrow on
+the tool bar), align the two tracks with the instrumental track.
+
+Using the mouse, highlight the first phrase of your two vocal tracks.
+The keyboard combination \verb!<Shift>-<spacebar>! will start playing the
+selected vocals in a loop. You should also hear your instrumentals, as well.
+Again, using the mouse, mute one of the tracks;
+the {\it Mute} button is located to the
+left of the track. Listen to the phrase that is not muted and then mute it
+and unmute the other track. Listen to the newly unmuted phrase. Keep going
+back and forth until you decide which version you like better. 
+Press the spacebar to stop the loop. Highlight
+the phrase in the track you don't like and enter \verb!<Ctl>-L!!
+This will reduce the unwanted phrase to silence. If you did it correctly,
+the phrase you prefered will remain.
+
+Repeat this process for every phrase in the tracks.
+
+Once you are done, highlight a region in both tracks and
+enter \verb!<Ctl>-<Shift>-M! to merge the two tracks into a new, single track.
+Save your project and then delete the two individual tracks.
+
+Import your next clean take into Audacity and repeat the entire process
+again until you have the best phrases from all your takes.
+
+\section*{Adjust the timings of your phrases}
+
+Play the entire song, stopping when you hear some vocals that are 
+not quite lined up with the instrumentals. If the vocals are coming
+in too late, higlight a small bit of the quiet region before the phrase
+and enter \verb!<Ctl>-X! to remove the section.
+Click on a region of quiet space
+immediately after the phrase and enter \verb!<Ctl>-V! to paste in the deleted
+section. This procedure will move the phrase earlier in time, leaving
+subsequent phrases at their same positions.
+For phrases that come in too early, cut time after the phrase
+and paste the deleted portion before the phrase.
+
+Repeat the entire process until all phrases are properly aligned.
+
+Once you are happy with the timing,
+duplicate your vocal track twice with
+\verb!<Ctl-D>!. The two duplicate tracks will eventually become
+your backing vocals.
+
+\section*{Equalizing your vocals}
+
+Run the equalizer from the Effects menu on your vocals. See the web for the
+best curve for vocals.
+
+\section*{Add backing tracks}
+
+Select one of the duplicate tracks by double-clicking and then choose
+{\it Change Pitch} on the {\it Effects} menu. 
+Move the pitch up by a little bit (0.1 or 0.2 semitones). Do the same
+for the other track, only pitch it down (-0.1 or -0.2 semitones).
+At this point, the vocals should sound fuller and richer.
+
+If the original vocals are on the sharp side, then pitch both tracks down,
+one more than the other. Likewise, if the original vocals are flattish, pitch
+both tracks up.
+
+You can also time shift the duplicate tacks forward in time a little bit,
+one more than the other to add a chorus effect.
+
+Reduce the volume of the duplicate tracks gradually until any flanging
+type artifacts cannot be heard.
+
+\end{document}

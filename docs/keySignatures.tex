@@ -1,0 +1,111 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{Songlib: key signatures}
+
+\title{Songlib: key signatures\\
+\date{Revision Date: \today}}
+
+\author{written by: Song Li Buser}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{keySignatures.pdf}}
+\W\htmlrule
+
+\section*{Using key signatures}
+
+The \songlib\ system allows you to compose 
+within the structure of a key. By setting
+a key within your \songlib\ program, you 
+can use special chord generating functions
+that do all the work for you in figuring
+out what sounds pleasing (or not so pleasing
+if you choose). To start, set the key 
+by using the {\it setKey} function. Here are
+some example calls to {\it setKey}:
+
+\begin{verbatim}
+    setKey(C);
+    setKey(D);
+    setKey(Gb);
+\end{verbatim}
+
+The default key for \songlib\ is C.
+
+The next step is to set the mode using
+the {\it setMode} function. The \songlib\ system
+currently supports 9 modes:
+
+\begin{itemize}
+\item
+    IONIAN
+\item
+    DORIAN
+\item
+    PHRYGIAN
+\item
+    LYDIAN
+\item
+    MIXOLIDIAN
+\item
+    AEOLIAN
+\item
+    LOCRIAN
+\item
+    MELODIC\_MINOR
+\item
+    HARMONIC\_MINOR
+\end{itemize}
+
+Here is an example call to {\it setMode}:
+
+\begin{verbatim}
+    setMode(AEOLIAN);
+\end{verbatim}
+
+The default mode for \songlib\ is {\sc IONIAN}.
+The mode determines the `mood' of your composition,
+with IONIAN, LYDIAN, and MIXOLIDIAN generating
+a brighter mood and the rest generating darker moods.
+
+Finally, call the chord function to generate
+chords appropriate for your chosen mode. Here is
+an example call to {\it c}, which plays the first
+of seven chords in the chosen mode:
+
+\begin{verbatim}
+    c(1,beats,instrument,octave);
+\end{verbatim}
+
+The \verb!c(1,...)! function call will play a chord whose root note (or
+base note) is C if the key is C, D if the key is D
+and so on. The \verb!c(2...)! function call will play a chord whose
+root note is one note higher, and so on.
+To play individual notes, rather than chords, do something
+similar to the following:
+
+\begin{verbatim}
+    play(beats,instrument,octave,degree(1));
+    n(1,beats,instrument,octave,0);
+\end{verbatim}
+
+Both these calls will play a C note in the key of C, a D note
+in the key of D and so on. Calling:
+
+\begin{verbatim}
+    play(beats,instrument,octave,degree(2));
+    n(2,beats,instrument,octave,0);
+    n(1,beats,instrument,octave,1);
+\end{verbatim}
+
+will all play the next higher note in the key, and so on.
+
+If you following these conventions, you can change
+your key and your mode just by calling {\it setKey} and
+{\it setMode}, with no other changes.
+
+For more on keys and modes, see \see{modes}.
+\end{document}

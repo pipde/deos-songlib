@@ -1,0 +1,60 @@
+\newcommand{\see}[1]
+    {
+    \IfFileExists{#1.tex}
+	{\textcolor{blue}{#1}}
+	{\textcolor{red}{#1?}}
+    }
+\newcommand{\seed}[2]
+    {
+    \IfFileExists{#1.tex}
+	{\textcolor{blue}{#2}}
+	{\textcolor{red}{#2?}}
+    }
+
+
+\T\begin{ifhtml}
+\HlxEval{
+(put 'HlxSee  'hyperlatex 'hyperlatex-See)
+(put 'HlxSeed 'hyperlatex 'hyperlatex-Seed)
+
+(defun hyperlatex-See ()
+    (let ((name (hyperlatex-parse-required-argument)))
+	(cond
+	    ((file-exists-p (concat name ".tex"))
+		(hyperlatex-insert-URL name name)
+		)
+	    (t
+		(hyperlatex-insert-name name "red")
+		)
+	    )
+	)
+    )
+(defun hyperlatex-Seed ()
+    (let* ((name (hyperlatex-parse-required-argument))
+	  (nickname (hyperlatex-parse-required-argument)))
+	(cond
+	    ((file-exists-p (concat name ".tex"))
+		(hyperlatex-insert-URL name nickname)
+		)
+	    (t
+		(hyperlatex-insert-name nickname "red")
+		)
+	    )
+	)
+    )
+(defun hyperlatex-insert-name (name color)
+    (insert hyperlatex-meta-< "font color=" color hyperlatex-meta->)
+    (insert name "?")
+    (insert hyperlatex-meta-< "/font" hyperlatex-meta->)
+    )
+(defun hyperlatex-insert-URL (name nickname)
+    (insert hyperlatex-meta-< "a href=" hyperlatex-meta-dq)
+    (insert name ".html" hyperlatex-meta-dq)
+    (insert hyperlatex-meta->)
+    (insert nickname)
+    (insert hyperlatex-meta-< "/a" hyperlatex-meta->)
+    )
+}
+\newcommand{\see}{\HlxSee}
+\newcommand{\seed}{\HlxSeed}
+\T\end{ifhtml}

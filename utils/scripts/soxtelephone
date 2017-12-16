@@ -1,0 +1,4 @@
+#!/bin/bash
+effect=bandpass
+options="2000 0.71q gain 5"
+soxfilter -e $effect -o "$options" $*

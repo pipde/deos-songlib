@@ -1,0 +1,24 @@
+# this script plays instrument notes from a soundfont
+# two seconds per note
+#FLUID3="-c /etc/timidity/cfg/fluid3.cfg"
+config=""
+
+if [ $1"x" = "-sx" ]; then
+    echo Changing to drop box on $2
+    config=$2
+    shift
+    shift
+    fi
+
+echo arg 1: soundfont
+echo arg 2: midi instrument
+echo arg 3: midi octave
+echo arg 4: drums \(use 0 if drums are desired, do not provide otherwise\)
+javac -cp .:jMusic1.6.4.jar Scale.java
+echo playing instrument $i, bank $4
+java -cp .:jMusic1.6.4.jar Scale $2 $3 1
+if [ $4"x" = "x" ] ; then
+    timidity $config -idv -x"soundfont $1" scale_$2.mid;
+else
+    timidity $config -idv -x"soundfont $1" -D$4 scale_$2.mid;
+fi

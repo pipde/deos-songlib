@@ -1,0 +1,9 @@
+#!/bin/bash
+for s in "$@"
+    do
+    chmod 644 "$s"
+    name=`basename "$s" .flac`
+    dir=`dirname "$s"`
+    echo converting "$s" to OGG
+    flac -s -f -d -c "$s" | sox -t wav - "$dir"/"$name".ogg
+    done

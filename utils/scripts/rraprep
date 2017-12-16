@@ -1,0 +1,26 @@
+#!/bin/bash
+if [ $# = 0 ]
+    then
+    echo "Usage: rraprep <audio-file> ..."
+    echo Accepts rra or wav files
+    exit 0
+fi
+
+echo monoizing, fading, normalizing, and converting RRA or WAV files...
+
+for s in $*
+    do
+    echo working on $s
+    name=`basename $s .wav`
+    if [ $name = $s ]
+        then # must be an rra
+        rramono $s | rrafader | rranormalize > .s.rra
+        mv .s.rra $s
+        rra2flac $s
+    else # is a wav
+        wav2rra -t0 $s | rrafader | rranormalize > .s.rra
+        mv .s.rra $name.rra
+        rra2flac $name.rra
+    fi
+    echo $s converted to flac.
+    done

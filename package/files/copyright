@@ -1,0 +1,41 @@
+songlib
+
+Copyright: John C. Lusth <lusth@cs.ua.edu>
+
+2009-01-28
+
+The home page of songlib is at: 
+http://songlib.cs.ua.edu/
+
+Copyright (c) 1995-2009 John C. Lusth.  All rights reserved.
+
+This software is provided "as is," without warranty of any kind, express
+or implied.  In no event shall its copyright holder or its
+contributors be held liable
+for any direct, indirect, incidental, special or consequential damages
+arising out of the use of or inability to use this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+    1. Redistributions of source code must retain the above copyright notice,
+       definition, disclaimer, and this list of conditions.
+
+    2. Redistributions in binary form (compiled executables) must reproduce
+       the above copyright notice, definition, disclaimer, and this list of
+       conditions in documentation and/or other materials provided with the
+       distribution. 
+
+    3. Altered versions--including, but not limited to, ports to new operating
+       systems, existing ports with new graphical interfaces, and dynamic,
+       shared, or static library versions--must be plainly marked as such
+       and must not be misrepresented as being the original source.  Such
+       altered versions also must not be misrepresented as being songlib
+       releases--including, but not limited to, labeling of the altered
+       versions with the names "songlib" (or any variation thereof, including,
+       but not limited to, different capitalizations) without the explicit
+       permission of the copyright holder. 
+
+    4. The copyright holder retains the right to use the name "songlib"
+       for holder's own source and binary releases.

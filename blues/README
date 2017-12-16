@@ -1,0 +1,11 @@
+Step 1: make the library
+
+    (cd ../lib; sudo make install) # or equivalent
+
+Step 2: install the samples
+
+    (cd ../samples; sudo ./install) # or equivalent
+
+Step 3 : build the blues audio file
+
+    make

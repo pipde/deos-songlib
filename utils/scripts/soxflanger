@@ -1,0 +1,4 @@
+#!/bin/bash
+effect=flanger
+options="0 1 0 85 2 sin 25 lin"
+soxfilter -e $effect -o "$options" $*

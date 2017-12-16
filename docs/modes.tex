@@ -1,0 +1,707 @@
+\documentclass{article}  
+\input{header}
+
+\htmltitle{songlib: modes}
+
+\title{Songlib: modes\\
+\date{Revision Date: \today}}
+
+\author{written by: Song Li Buser}
+
+\begin{document}
+
+\maketitle
+
+\W\subsubsection*{\xlink{Printable Version}{modes.pdf}}
+\W\htmlrule
+
+\section*{Musical modes}
+
+Musical modes provide a structure for generating
+nice sounding chords. There are seven modern
+musical modes:
+
+\begin{itemize}
+\item Ionian
+\item Dorian
+\item Phrygian
+\item Lydian
+\item Mixolydian
+\item Aeolian
+\item Locrian
+\end{itemize}
+
+The {\it Ionian}, {\it Lydian}, and {\it Mixolydian} modes are considered
+major modes and have a brighter and more cheery 
+feel than the other listed modes, which are considered
+minor modes.
+
+To read more about modes, see
+\xlink{Musical Modes}{http://en.wikipedia.org/wiki/Musical_mode}
+on Wikipedia.
+
+\section*{Using modal chords}
+
+It is not actually necessary to understand modes
+to use them as a composition tool in \songlib.
+By setting a particular mode, \songlib\ allows
+you to generate {\it modal} chords compatible with that mode quite easily.
+The trichord generating function
+is named {\it c}, with the first argument specifying
+the chord number:
+
+\verb!c(1,...)!, \verb!c(2,...)!, \verb!c(3,...)!, \verb!c(4,...)!,
+    \verb!c(5,...)!, \verb!c(6,...)!, and \verb!c(7,...)!
+
+A trichord is simply a chord of three notes.
+If you are building a song in the key of C, then the
+\verb!c(1,...)! chord has a base (or {\it root}) note of C,
+the \verb!c(2,...)! chord has a root
+note of D, and so on through E, F, G, A, and B. If you
+are using the key of E, the \verb!c(1,...)! chord has a root note
+of E, the \verb!c(2,...)! chord has a root note of F\#, and so on.
+
+Thus, an {\it Ionian} riff in the key of {\it D} might look like the
+following in \songlib:
+
+\begin{verbatim}
+    setKey(D);
+    setMode(IONIAN);
+
+    for (i = 0; i < 4; ++i)
+        {
+        c(1,H,guitar,octave);
+        c(4,H,guitar,octave-1);
+        c(5,H,guitar,octave-1);
+        c(5,H,guitar,octave-1);
+        c(4,Hd,guitar,octave-1);
+        }
+\end{verbatim}
+
+For simplicity, we will sometimes abbreviate the call \verb!c(1,...)! as 
+{\it c1}, \verb!c(2,...)! as {\it c2}, and so on.
+
+Notice the absence of F\# in the above riff. This is because \songlib\ figures
+out the root note and the other notes in the chord automatically when the
+{\it c} function is used.
+
+\section*{Chord progressions}
+
+When using the modal system, not only does \songlib\ figure out which notes go
+with which chord, you also get, for free, a bullet-proof way to compose songs using chord progressions.
+A chord progression is simply two or more chords in a row. Some very smart
+people have figured out which chords sound `nice' next to each other. Here
+are the general purpose charts for designing your own nice-sounding chord
+progressions.
+
+For the {\it Ionian} or major mode, the chord progression generating chart looks
+like:
+
+\begin{itemize}
+\item
+        {\it c3}
+\item
+        {\it c6}
+\item
+        {\it c2} or {\it c4}
+\item
+        {\it c5} (then go to {\it c1}) or {\it c7} (then go to {\it c3})
+\item
+        {\it c1}
+\item
+        any chord
+\end{itemize}
+
+To generate a chord progression, you can start at any bullet.
+Say we start at {\it c1}. Then we go to the next bullet. It says
+any chord, so we can go to any bullet. Let's go to the
+{\it c2} or {\it c4}
+bullet and choose {\it c4}. Again, we go to the next bullet 
+and choose {\it c5}. Finally, we return to {\it c1}.
+It is common for major chord progressions to end at {\it c1}.
+Our little journey yielded the progression:
+
+\begin{quote}
+    {\it c1} $\rightarrow$ {\it c4} $\rightarrow$ {\it c5} $\rightarrow$ {\it c1}
+\end{quote}
+
+For the {\it harmonic minor} mode,
+the generating chart is slightly different:
+
+\begin{itemize}
+\item
+        {\it cM7}
+\item
+        {\it c3}
+\item
+        {\it c6}
+\item
+        {\it c2} (then go to {\it c5}
+            or {\it c7}) or {\it c4} (then go to {\it c7})
+\item
+        {\it c5} or {\it c7}
+\item
+        {\it c1}
+\item
+        any chord
+\end{itemize}
+
+Note that this chart introduces a new chord, {\it cM7}, which stands
+for a {\it Major c7}. In the harmonic minor mode, {\it c7} is a a diminished chord,
+so this chart features two versions of {\it c7}, one major and one diminished.
+The next section covers forcing chords in one mode to behave as if in
+another mode.
+
+\section*{Playing chords out of mode}
+
+No matter the mode, some of the seven possible chords are major
+chords, some are minor, some are augmented, and some are diminished chords.
+\Songlib\ figures this out automatically, so composing using the
+modal system is quite easy.
+However, the modal system described above is a little
+too confining. For example, in {\it Ionian} mode, {\it c1} is a major chord.
+But perhaps you wish
+to throw in a minor version of {\it c1}.
+To do so, simply call the \verb!cm(1,...)! function
+instead of \verb!c(1,...)!.
+
+\begin{verbatim}
+    setKey(D);
+    setMode(IONIAN);
+
+    for (i = 0; i < 4; ++i)
+        {
+        cm(1,H,guitar,octave);
+        c(4,H,guitar,octave-1);
+        c(5,H,guitar,octave-1);
+        c(5,H,guitar,octave-1);
+        c(4,Hd,guitar,octave-1);
+        }
+\end{verbatim}
+
+In {\it Ionian} mode,
+the three major chords are {\it c1}, {\it c4}, and {\it c5},
+and the three minor chords are {\it c2}, {\it c3}, and {\it c6}.
+The last chord, {\it c7}, is
+a diminished chord.
+In {\it Aeolian} mode, the major chords are {\it c3}, {\it c6}, and {\it c7},
+while {\it c1}, {\it c4}, and
+{\it c5} are minor chords and {\it c2} is a diminished chord.
+All chords have major, minor, augmented, and
+diminished versions, obtained by appending the appropriate
+letter to the chord name; the major, minor, augmented,
+and diminished versions are named, {\it cM}, {\it cm}, {\it ca}, and {\it cd},
+respectively.
+
+Thus for the progression generating chart for the {\it harmonic minor} mode,
+shown in
+the previous section, the {\it cM7} placeholder would be implemented by
+a call to \verb!cM(7,...)!.
+Since {\it c7} is a diminished chord in the {\it harmonic minor} mode,
+it could be implemented as:
+
+\begin{verbatim}
+    chord(beats,instrument,octave,C,+3,+6,(int) 0);
+\end{verbatim}
+
+A diminished chord lowers both the
+second note and the third note one semitone each.
+A call to the {\it harmonic minor} chord \verb!cM(7,...)! in the key of C is 
+equivalent to the following call to {\it chord}:
+
+\begin{verbatim}
+    chord(beats,instrument,octave,C,+4,+7,(int) 0);
+\end{verbatim}
+
+Augmenting a chord generally means to
+raise the third note in the chord one semitone. For example,
+the {\it Aeolian} {\it c7} chord is a major chord, so
+calling \verb!ca(7,...)! in that mode in the key of C is equivalent to:
+
+\begin{verbatim}
+    chord(beats,instrument,octave,C,+4,+8,(int) 0);
+\end{verbatim}
+
+\section*{Degrees}
+
+In music theory, the degree of a note indicates
+its index with respect to the root note in the
+scale. The modal system of \songlib\ uses a
+diatonic scale having seven notes. In the key
+of {\it C}, the index of {\it C} is 1, {\it D} is 2, {\it E} is 3 and
+so on. In the key of {\it D}, the index of {\it D} is 1,
+{\it E} is 2, {\it F\#} is 3 and so on. 
+
+The degree function returns the root note of the associated modal
+chord. For example,
+if you are in the key of {\it C}, then
+{\tt degree(1)} returns a {\it C},
+{\tt degree(2)} returns a {\it D},
+and so on.
+
+Since {\it c1} is a major chord in {\it Ionian} mode, it is therefore 
+equivalent, under this scenario, to all of the following calls:
+
+\begin{verbatim}
+    chord(H,guitar,octave,C,+4,+7,(int) 0);
+    chord(H,guitar,octave,degree(1),+4,+7,(int) 0);
+    maj(H,guitar,octave,C);
+    maj(H,guitar,octave,degree(1));
+\end{verbatim}
+
+when in the key of C.
+Likewise, {\it c2} is a minor chord and
+is thus equivalent to all these calls:
+
+\begin{verbatim}
+    chord(H,guitar,octave,D,+3,+7,(int) 0);
+    chord(H,guitar,octave,degree(2),+3,+7,(int) 0);
+    min(H,guitar,octave,D);
+    min(H,guitar,octave,degree(2));
+\end{verbatim}
+
+Of course, you can always use {\it chord} and hardwire the notes,
+but then it is difficult to change the key of your composition.
+By using the degree {\it function} with {\it chord}, it is easy to change the
+key,
+but you have to keep track of which
+chords sound appropriate, i.e. when to play major and
+when to play minor chords. \Songlib's modal system
+takes care of all these problems automatically.
+    
+\section*{Modes and their chords}
+
+Note that
+every mode uses some combination of major and
+minor chords in its scale. For example, 
+the {\it Ionian} mode actually uses the chords:
+
+\begin{center}
+{\it maj/{\tt degree(1)}},
+{\it min/{\tt degree(2)}},
+{\it min/{\tt degree(3)}},
+{\it maj/{\tt degree(4)}},
+{\it maj/{\tt degree(5)}},
+{\it min/{\tt degree(6)}}, and
+{\it dim/{\tt degree(7)}}
+\end{center}
+
+so in {\it Ionian} mode, {\it c1} is equivalent to {\it maj/degree(1)},
+and so on.
+
+The following table lists the types of chords used for
+every mode:
+
+\begin{center}
+\begin{tabular}{lccccccc}
+\T\toprule
+\texonly{\multirow{2}{*}{{\it Mode}} & \multicolumn{7}{c}{Chord Number} \\}
+\htmlonly{ {\it Mode} & & & {\it Chord} & {\it #} & & & \\}
+%\cmidrule{2-8}
+               & 1   & 2   & 3   & 4   & 5   & 6   & 7   \\
+\T\midrule
+Ionian         & maj & min & min & maj & maj & min & dim \\
+Dorian         & min & min & maj & maj & min & dim & maj \\
+Phrygian       & min & maj & maj & min & dim & maj & min \\
+Lydian         & maj & maj & min & dim & maj & min & min \\
+Mixolydian     & maj & min & dim & maj & min & min & maj \\
+Aeolian        & min & dim & maj & min & min & maj & maj \\
+Locrian        & dim & maj & min & min & maj & maj & min \\
+Melodic Minor  & min & min & aug & maj & maj & dim & min \\
+Harmonic Minor & min & dim & aug & min & maj & maj & dim \\
+\T\bottomrule
+\end{tabular}
+\end{center}
+
+\W ~\newline
+
+To use {\it Aeolian} mode, for example, you could use
+the chords:
+
+\begin{center}
+{\it min}/{\tt degree(1)},
+{\it dim}/{\tt degree(2)},
+{\it maj}/{\tt degree(3)},
+{\it min}/{\tt degree(4)},
+{\it min}/{\tt degree(5)},
+{\it maj}/{\tt degree(6)},
+and {\it maj}/{\tt degree(7)}
+\end{center}
+
+Of course, \songlib\ figures out which chords and degrees to use if
+you stick with calls to \verb!c(1,...)! through \verb!c(7,...)!.
+
+Note the addition of two more modes in the table, the {\it Melodic}
+and {\it Harmonic} {\it Minors}.
+Furthermore, there are three alias modes, {\it Major}
+(which is the same as {\it Ionian}) and {\it Minor} and
+{\it Natural} {\it Minor}
+(which are aliases for {\it Aeolian}).
+
+The {\it setMode} function is used to set the mode. To
+set the desired mode, capitalize the mode name and
+substitute underscores for spaces. For example,
+to set the {\it Harmonic} {\it Minor} mode, make this call:
+
+\begin{verbatim}
+    setMode(HARMONIC_MINOR);
+\end{verbatim}
+
+To change the mode within a song, simply call {\it setMode} with the
+new mode. Any chords generated subsequently will use the new
+mode.
+
+\section*{Flattened and sharpened chords}
+
+Sometimes, it is desirable to call a chord in the next
+lower (or next higher) key. One can {\it flatten} and {\it sharpen} the
+modal chords for this task. The chords are obtained by calling the
+{\it cf} function
+(for flatten)
+and the {\it cs} function (for sharpen) to the modal chord name.
+For example, suppose your
+\songlib\ program is in E-{\it Phrygian}:
+
+\begin{verbatim}
+    setKey(E);
+    setMode(PHRYGIAN);
+\end{verbatim}
+
+and you wish to play a {\it c3} chord in the key of {\it D\#}.
+You would make a call similar to this:
+
+\begin{verbatim}
+    cf(3,beats,instrument,octave);
+\end{verbatim}
+
+To play a {\it c4} chord in the key of {\it F}, the call would
+look similar to:
+
+\begin{verbatim}
+    cs(4,beats,instrument,octave);
+\end{verbatim}
+
+\section*{Seventh chords}
+
+The \songlib\ library also has functions for generating
+modal seventh chords. A seventh chord has an additional
+note one third higher than the highest note
+in a trichord, yielding a total of four notes, although,
+sometimes, the next to the highest note in the chord is omitted.
+
+The seventh chord functions are exactly the same
+as the basic modal
+trichord functions, but the {\it c7} function is called instead
+of the {\it c} function.
+To provide more control over seventh chords,
+\songlib\ provides these additional functions:
+
+\begin{center}
+\begin{tabular}{lcccr}
+\T\toprule
+{\it Common name} & {\it technical name} & {\it modal function} 
+    & {\it semitone deltas}\\
+\T\midrule
+Major $7^{th}$ & Major/Major & cM7 & {\tt 4, 7, 11}\\
+Minor $7^{th}$ & Minor/Minor & cm7 & {\tt 3, 7, 10}\\
+Augmented $7^{th}$ & Augmented & ca7 & {\tt 4, 8, 11}\\
+Diminished $7^{th}$ & Diminished/Diminished & cd7 & {\tt 3, 6, ~9}\\
+Dominant $7^{th}$ & Major/Minor & cD7 & {\tt 4, 7, 10}\\
+\T\bottomrule
+\end{tabular}
+\end{center}
+
+\W ~\newline
+
+Recall that the degree function can be used to automatically derive the
+correct pitch. In {\it Ionian} mode, the seventh chord with a root of degree 3
+would be a minor chord. Thus, in the non-modal system, one would
+call:
+
+\begin{verbatim}
+    chord(beats,instrument,octave,degree(3),+3,+7,+10,(int) 0);
+\end{verbatim}
+
+Using the modal system, the call would be:
+
+\begin{verbatim}
+    c7(3,beats,instrument,octave);
+\end{verbatim}
+
+in {\it Ionian} mode and 
+
+\begin{verbatim}
+    cm7(3,beats,instrument,octave);
+\end{verbatim}
+
+in modes where {\it c3} is not a minor chord.
+    
+If the current key is the key of {\it C} and the mode is {\it Ionian}, the
+notes in both the above chords would be {\it E}, {\it G}, {\it B},
+and {\it D}.
+Note that there
+are three semitones between {\it E} and {\it G}, seven semitones between
+{\it E} and {\it B}, and ten semitones between {\it E} and {\it D}.
+
+\section*{Extended chords}
+
+The \songlib\ system provides, ninth, eleventh, and thirteenth
+chords as well as seventh chords. Those functions are
+{\it c9}, {\it c11}, and {\it c13}, respectively.
+One can also flatten and sharpen these chords with the functions
+{\it c9f},
+{\it c9s},
+{\it c11f},
+{\it c11s},
+{\it c13f},
+and
+{\it c13s}.
+
+With ninth chords, \songlib\ omits the $3^{rd}$ highest note. With
+eleventh chords, the $4^{th}$ and $2^{nd}$ highest notes are omitted, while
+with thirteenth chords, the $5^{th}$, $3^{rd}$, and $2^{nd}$ highest notes
+are omitted.
+The next section discusses
+how to establish finer control over the modal system,
+including the omission of notes.
+
+\section*{Fine control of the modal chord system}
+
+All the modal chords are based upon a general purpose function
+named {\it cchord}. If you wish to control
+the modal chord system at a lower level,
+you can call the {\it cchord} function directly.
+The function
+has the following signature:
+
+\begin{verbatim}
+    cchord(chordNumber,duration,instrument,octave,tweaks);
+\end{verbatim}
+
+where
+{\it chordNumber} is selected from the set \{1,2,3,4,5,6,7\} and
+and {\it tweaks} is an string of adjustments the sharpen,flatten,
+or omit
+the individual notes in the chord. For example, the {\it c} chord
+is simply a wrapper to the call:
+
+\begin{verbatim}
+    cchord(chordNumber,duration,instrument,octave,"xxx");
+\end{verbatim}
+
+In the tweaks string, the following encoding
+is used:
+
+\begin{tabular}{cl}%
+\T\toprule
+{\it character} & {\it meaning} \\
+\T\midrule
+{\it -}      & corresponding note is omitted \\
+{\it x}      & corresponding note is left alone \\
+{\it X}      & corresponding note is raised one octave \\
+{\it y}      & same as {\it x} \\
+{\it Y}      & corresponding note is lowered one octave \\
+{\it n}      & corresponding note is the successor note in the scale/mode \\
+{\it N}      & line {\it n}, but one octave higher \\
+{\it m}      & like {\it n}, but two notes up \\
+{\it m}      & like {\it m}, but one octave higher \\
+{\it l}      & like {\it n}, but three notes up \\
+{\it L}      & like {\it l}, but one octave higher \\
+{\it p}      & corresponding note is the predecessor note in the scale/mode \\
+{\it P}      & like {\it p}, but one octave down \\
+{\it q}      & like {\it p}, but two notes down \\
+{\it Q}      & like {\it q}, but one octave lower \\
+{\it r}      & like {\it p}, but three notes down \\
+{\it R}      & like {\it r}, but one octave lower \\
+{\it s}      & corresponding note is adjusted up one semitone \\
+{\it S}      & corresponding note is adjusted up two semitones \\
+{\it u}      & corresponding note is adjusted up three semitone \\
+{\it U}      & corresponding note is adjusted up four semitones \\
+{\it b}      & corresponding note is adjusted down one semitone \\
+{\it B}      & corresponding note is adjusted down two semitones \\
+{\it d}      & corresponding note is adjusted down three semitone \\
+{\it D}      & corresponding note is adjusted down four semitones \\
+\T\bottomrule
+\end{tabular}
+
+Thus, the chord {\it c7} is a wrapper to the call:
+
+\begin{verbatim}
+    cchord(chordNumber,duration,instrument,octave,"xxxx");
+\end{verbatim}
+
+If {\it c4} is a major chord,
+then it can be tweaked into a dominant seventh chord
+using the following call to {\it cchord}:
+
+\begin{verbatim}
+    cchord(4,duration,instrument,octave,"xxxp");
+\end{verbatim}
+
+which flattens the seventh note one step down the scale.
+If {\it c4} is a minor chord,
+it can be tweaked into an augmented seventh chord with the call:
+
+\begin{verbatim}
+    cchord(4,duration,instrument,octave,"xnnx");
+\end{verbatim}
+
+sharpening the middle two notes of the chord.
+
+One should generally stick with tweaks from the set:
+
+\begin{verbatim}
+    X Y n N m M l L p P q Q r R
+\end{verbatim}
+
+Applying a pleasing sounding tweak using semitone shifts
+in one mode will
+likely sound unpleasant if the mode or key is changed.
+
+In general, the {\it cchord} function is called directly if you
+wish to change the notes that are omitted in an extended chord.
+For example, a {\it c9} chord is a wrapper to:
+
+\begin{verbatim}
+    cchord(chordNumber,duration,instrument,octave,"xx-xx");
+\end{verbatim}
+
+This tweaks string omits the middle note of the chord; this note
+is known as {\it the fifth}.
+Music theorists use what seems, at first, a strange terminology
+for naming the notes of the chord. The following table gives
+the note names that correspond to the position in the tweaks string:
+
+\begin{tabular}{cl}%
+\T\toprule
+{\it string position} & {\it note name} \\
+\T\midrule
+1           & the root\\
+2           & the third \\
+3           & the fifth \\
+4           & the seventh \\
+5           & the ninth \\
+6           & the eleventh \\
+7           & the thirteenth \\
+\T\bottomrule
+\end{tabular}
+
+If you wish to omit the third instead of the fifth, you would call
+{\it cchord} like this:
+
+\begin{verbatim}
+    cchord(chordNumber,duration,instrument,octave,"x-xxx");
+\end{verbatim}
+
+\section*{Other modal chords}
+
+There are a few other modal chord functions of note:
+
+\begin{tabular}{cl}%
+\T\toprule
+{\it function} & {\it result} \\
+\T\midrule
+\verb!ic!           & for example, ic(5,2,beats,inst,octave) which plays the lower two notes of chord 5 an
+    octave higher -- the larger the second argument, the more notes are inverted(raised an octave)\\
+\verb!cpower!           &  plays a power chord; the middle note is replaced by the root note at one higher octave\\
+\verb!cpower2!           &  like {\it cpower}, but the middle note is played as well\\
+\verb!csus2!           &  plays a suspended chord; the middle note is replaced by the major second\\
+\verb!csus4!           &  plays a suspended chord; the middle note is replaced by the perfect fourth\\
+\verb!cquart!           &  plays a quartal chord (stacked fourths)\\
+\verb!b!           &  plays  a broken chord (arpeggio)\\
+\T\bottomrule
+\end{tabular}
+
+All these chords have the same arguments as {\it c}, except the broken chord
+function {\it b}. With a broken chord, the individual notes are played
+sequentially or in parallel, according to a set of given patterns, rather than
+all in parallel. For example, the call:
+
+\begin{verbatim}
+    b(1,H,piano,octave,"-x-","x-x",(char *) 0);
+\end{verbatim}
+
+would play the middle note of the chord followed by the root and the
+top note played simultaneously. The duration of each pattern is the
+duration of the chord divided by the
+number of patterns. In the above example, each pattern is played
+for a quarter note.
+Note that tweaks can be used in a broken chord pattern. Also, an
+``unbroken'' broken chord is equivalent to {\it cchord}. The following
+calls are equivalent:
+
+\begin{verbatim}
+    b(3,W,piano,octave,"xxx",(char *) 0);
+    cchord(3,W,piano,octave,"xxx");
+    c(3,W,piano,octave);
+\end{verbatim}
+
+You can adjust the amplitude each pattern in a broken chord with a call
+to {\it setBrokenAmplitudes}:
+
+\begin{verbatim}
+    setBrokenAmplitudes(1.0,0.5,DX);
+    b(1,H,piano,octave,"-x-","x-x",(char *) 0);
+\end{verbatim}
+
+Each argument to {\it setBrokenAmplitudes} is a factor with which the current
+amplitude is multiplied before the pattern is played. In this example,
+the first pattern \verb!"-x-"! is played at the current amplitude while the
+second pattern \verb!"x-x"! is played at half the current amplitude.
+The factors sent to {\it setBrokenAmplitudes} persist until the next call to
+{\it setBrokenAmplitudes}.
+
+\section*{Playing single notes in the modal system}
+
+You can play the individual notes in the current key, consistent with
+the current mode. These single note playing functions have the form:
+
+\begin{verbatim}
+    n(chordNumber,duration,instrument,octave,offset)
+\end{verbatim}
+
+The offset is chosen from the set \{0..6\}. These numbers
+are the equivalent of {\it do}, {\it re}, {\it mi}, {\it fa}, {\it so},
+{\it la}, and {\it ti}. For example, the {\it c1} function is equivalent
+to playing the following notes simultaneously:
+
+\begin{verbatim}
+    n(1,H,piano,octave,0);
+    n(1,H,piano,octave,2);
+    n(1,H,piano,octave,4);
+\end{verbatim}
+
+You can flatten a note by calling {\it nf} instead of {\it n}.
+Likewise, you can sharpen a note by calling the {\it ns} function.
+For example,
+the chord {\it cm} is equivalent to the following notes played simultaneously:
+
+\begin{verbatim}
+    n(1,H,piano,octave,0);
+    nf(1,H,piano,octave,2);
+    n(1,H,piano,octave,4);
+\end{verbatim}
+
+A power chord omits the third and adds in the root note at
+an octave higher.
+You can play a power chord by combining calls to {\it cchord} and {\it n}.
+Here is one form of a power chord:
+
+\begin{verbatim}
+    cchord(chordNumber,duration,instrument,octave,"x-x");
+    backwards(duration);
+    n(chordNumber,duration,instrument,octave+1,0);
+\end{verbatim}
+
+This form has been encapsulated in the {\it cpower} function,
+
+Finally, you can retrieve
+the actual note in a modal chord by using the {\it getcnote}
+function. These two calls are equivalent:
+
+\begin{verbatim}
+    n(3,H,piano,5);
+    play(H,piano,getcnote(3,5));
+\end{verbatim}
+
+\end{document}
